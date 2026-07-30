@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Наша Веб-ОС — с магазином</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NextelOS</title>
     <style>
         /* ---------- Глобальные сбросы ---------- */
         * {
@@ -43,13 +43,14 @@
             text-align: center;
             color: white;
             font-size: 13px;
-            cursor: pointer;
+            cursor: grab;
             border: 1px solid transparent;
             transition: background 0.2s, border 0.2s;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 4px;
+            z-index: 10;
         }
         .desktop-icon:hover {
             background: rgba(255,255,255,0.18);
@@ -58,6 +59,7 @@
         .desktop-icon .icon {
             font-size: 32px;
             line-height: 1.2;
+            pointer-events: none;
         }
         .desktop-icon .label {
             font-size: 12px;
@@ -65,6 +67,11 @@
             text-shadow: 0 1px 4px rgba(0,0,0,0.6);
             word-break: break-word;
             max-width: 70px;
+            pointer-events: none;
+        }
+        .desktop-icon.dragging {
+            opacity: 0.6;
+            z-index: 100;
         }
 
         /* ---------- Панель задач ---------- */
@@ -262,7 +269,58 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        /* ---------- Стили для приложений ---------- */
+        /* ---------- Контекстное меню ---------- */
+        #context-menu {
+            position: fixed;
+            background: rgba(30,30,46,0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 8px;
+            padding: 6px 0;
+            min-width: 180px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            border: 1px solid rgba(255,255,255,0.08);
+            z-index: 99999;
+            display: none;
+        }
+        #context-menu .menu-item {
+            padding: 8px 20px;
+            color: #ddd;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        #context-menu .menu-item:hover {
+            background: rgba(255,255,255,0.08);
+        }
+        #context-menu .menu-item.danger {
+            color: #ff5e5e;
+        }
+        #context-menu .menu-item.danger:hover {
+            background: rgba(255,0,0,0.15);
+        }
+        #context-menu .menu-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.05);
+            margin: 4px 12px;
+        }
+        body.light-theme #context-menu {
+            background: rgba(255,255,255,0.95);
+            border-color: rgba(0,0,0,0.1);
+        }
+        body.light-theme #context-menu .menu-item {
+            color: #222;
+        }
+        body.light-theme #context-menu .menu-item:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        body.light-theme #context-menu .menu-item.danger {
+            color: #d63031;
+        }
+        body.light-theme #context-menu .menu-divider {
+            background: rgba(0,0,0,0.08);
+        }
+
+        /* ---------- Стили приложений ---------- */
         /* Терминал */
         #terminal-output {
             background: #0a0a0a;
@@ -295,6 +353,16 @@
             outline: none;
             font-family: 'Courier New', monospace;
             font-size: 14px;
+        }
+        body.light-theme #terminal-output {
+            background: #f5f5f5;
+            color: #222;
+        }
+        body.light-theme .terminal-input-line {
+            background: #e8e8e8;
+        }
+        body.light-theme .terminal-input-line input {
+            color: #222;
         }
 
         /* Файловый менеджер */
@@ -360,6 +428,19 @@
         .fm-item .fm-actions button:hover {
             color: #ff5e5e;
         }
+        body.light-theme .fm-toolbar button {
+            background: rgba(0,0,0,0.05);
+            color: #222;
+        }
+        body.light-theme .fm-toolbar button:hover {
+            background: rgba(0,0,0,0.12);
+        }
+        body.light-theme .fm-item .fm-name {
+            color: #222;
+        }
+        body.light-theme .fm-path {
+            color: #555;
+        }
 
         /* Текстовый редактор */
         .editor-area {
@@ -401,6 +482,10 @@
             color: #888;
             font-size: 13px;
             padding: 4px 8px;
+        }
+        body.light-theme .editor-area textarea {
+            background: #fafafa;
+            color: #222;
         }
 
         /* Калькулятор */
@@ -459,6 +544,17 @@
         .calc-history div {
             padding: 2px 0;
         }
+        body.light-theme .calc-display {
+            background: rgba(0,0,0,0.08);
+            color: #222;
+        }
+        body.light-theme .calc-btn {
+            background: rgba(0,0,0,0.05);
+            color: #222;
+        }
+        body.light-theme .calc-btn:hover {
+            background: rgba(0,0,0,0.12);
+        }
 
         /* Настройки */
         .settings-section {
@@ -512,6 +608,10 @@
         .wallpaper-item.active {
             border-color: #4a69bd;
         }
+        body.light-theme .settings-section h3 {
+            color: #222;
+            border-bottom-color: rgba(0,0,0,0.1);
+        }
 
         /* Менеджер процессов */
         .process-list {
@@ -547,106 +647,165 @@
         .process-item button:hover {
             background: rgba(255,0,0,0.4);
         }
+        body.light-theme .process-item {
+            background: rgba(0,0,0,0.04);
+        }
+        body.light-theme .process-item .proc-name {
+            color: #222;
+        }
 
-        /* Магазин приложений */
-        .store-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
-            padding: 8px;
-        }
-        .store-item {
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-            padding: 16px;
+        /* Корзина */
+        .trash-empty {
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: background 0.2s;
-        }
-        .store-item:hover {
-            background: rgba(255,255,255,0.08);
-        }
-        .store-item .app-icon {
-            font-size: 48px;
-            margin-bottom: 8px;
-        }
-        .store-item .app-name {
-            font-size: 16px;
-            color: #ddd;
-            font-weight: 500;
-        }
-        .store-item .app-desc {
-            font-size: 13px;
             color: #888;
-            margin: 6px 0 12px;
-        }
-        .store-item .app-actions button {
-            padding: 4px 16px;
-            border: none;
-            border-radius: 4px;
-            font-size: 13px;
-            transition: background 0.2s;
-        }
-        .store-item .install-btn {
-            background: #4a69bd;
-            color: white;
-        }
-        .store-item .install-btn:hover {
-            background: #6a89cc;
-        }
-        .store-item .uninstall-btn {
-            background: rgba(255,0,0,0.2);
-            color: #ff5e5e;
-        }
-        .store-item .uninstall-btn:hover {
-            background: rgba(255,0,0,0.4);
-        }
-        .store-item .installed-badge {
-            color: #50fa7b;
-            font-size: 13px;
-        }
-
-        /* Змейка */
-        #snake-canvas {
-            display: block;
-            margin: 0 auto;
-            background: #111;
-            border-radius: 4px;
-        }
-        .snake-score {
-            text-align: center;
-            color: #ddd;
+            padding: 40px 0;
             font-size: 18px;
-            margin-bottom: 8px;
         }
-
-        /* Рисовалка */
-        #paint-canvas {
-            display: block;
-            margin: 0 auto;
-            background: white;
-            border-radius: 4px;
-            cursor: crosshair;
-        }
-        .paint-toolbar {
+        .trash-item {
             display: flex;
-            gap: 8px;
-            justify-content: center;
-            margin-bottom: 8px;
+            align-items: center;
+            padding: 8px 12px;
+            gap: 12px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 4px;
+            margin-bottom: 4px;
         }
-        .paint-toolbar button {
+        .trash-item .trash-name {
+            flex: 1;
+            color: #ddd;
+        }
+        .trash-item .trash-actions button {
             background: rgba(255,255,255,0.1);
             border: none;
             color: #ddd;
-            padding: 4px 12px;
+            padding: 2px 12px;
+            border-radius: 4px;
+            margin: 0 4px;
+            transition: background 0.2s;
+        }
+        .trash-item .trash-actions button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .trash-item .trash-actions .restore-btn:hover {
+            color: #50fa7b;
+        }
+        .trash-item .trash-actions .delete-btn:hover {
+            color: #ff5e5e;
+        }
+        .trash-toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .trash-toolbar button {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #ddd;
+            padding: 4px 16px;
             border-radius: 4px;
             transition: background 0.2s;
         }
-        .paint-toolbar button:hover {
+        .trash-toolbar button:hover {
             background: rgba(255,255,255,0.2);
         }
+        body.light-theme .trash-item {
+            background: rgba(0,0,0,0.04);
+        }
+        body.light-theme .trash-item .trash-name {
+            color: #222;
+        }
+        body.light-theme .trash-toolbar button {
+            background: rgba(0,0,0,0.05);
+            color: #222;
+        }
+        body.light-theme .trash-toolbar button:hover {
+            background: rgba(0,0,0,0.12);
+        }
 
-        /* ---------- Светлая тема ---------- */
+        /* ---------- Адаптив для телефона ---------- */
+        @media (max-width: 768px) {
+            .desktop-icon {
+                width: 70px;
+                padding: 6px 2px;
+            }
+            .desktop-icon .icon {
+                font-size: 28px;
+            }
+            .desktop-icon .label {
+                font-size: 10px;
+                max-width: 60px;
+            }
+            #taskbar {
+                height: 44px;
+                padding: 0 6px;
+            }
+            #start-btn {
+                padding: 4px 12px;
+                font-size: 14px;
+                margin-right: 6px;
+            }
+            #taskbar-clock {
+                font-size: 12px;
+            }
+            .taskbar-item {
+                padding: 2px 10px;
+                font-size: 11px;
+            }
+            .window {
+                min-width: 280px;
+                min-height: 150px;
+                border-radius: 8px;
+            }
+            .window-header {
+                padding: 4px 8px;
+            }
+            .window-title {
+                font-size: 12px;
+            }
+            .window-controls button {
+                font-size: 14px;
+            }
+            .window-content {
+                padding: 10px;
+                font-size: 13px;
+            }
+            .fm-toolbar button {
+                font-size: 11px;
+                padding: 2px 8px;
+            }
+            .calc-grid {
+                max-width: 240px;
+            }
+            .calc-btn {
+                font-size: 16px;
+                padding: 8px;
+            }
+            .settings-section .wallpaper-item {
+                width: 60px;
+                height: 45px;
+            }
+            #context-menu .menu-item {
+                padding: 6px 14px;
+                font-size: 13px;
+            }
+            /* на телефоне окна почти на весь экран */
+            .window {
+                width: 95% !important;
+                height: 85% !important;
+                left: 2.5% !important;
+                top: 5% !important;
+                resize: none;
+            }
+            #taskbar-windows {
+                gap: 4px;
+            }
+            #collapse-all-btn {
+                padding: 2px 6px;
+                font-size: 12px;
+            }
+        }
+
+        /* ---------- Светлая тема (глобально) ---------- */
         body.light-theme #desktop {
             background: #e8e8e8;
         }
@@ -704,86 +863,6 @@
             background: rgba(255,255,255,0.92);
             color: #222;
         }
-        body.light-theme #terminal-output {
-            background: #f0f0f0;
-            color: #222;
-        }
-        body.light-theme .terminal-input-line {
-            background: #e0e0e0;
-        }
-        body.light-theme .terminal-input-line input {
-            color: #222;
-        }
-        body.light-theme .fm-toolbar button {
-            background: rgba(0,0,0,0.05);
-            color: #222;
-        }
-        body.light-theme .fm-toolbar button:hover {
-            background: rgba(0,0,0,0.12);
-        }
-        body.light-theme .fm-item .fm-name {
-            color: #222;
-        }
-        body.light-theme .fm-path {
-            color: #555;
-        }
-        body.light-theme .editor-area textarea {
-            background: #fafafa;
-            color: #222;
-        }
-        body.light-theme .calc-display {
-            background: rgba(0,0,0,0.08);
-            color: #222;
-        }
-        body.light-theme .calc-btn {
-            background: rgba(0,0,0,0.05);
-            color: #222;
-        }
-        body.light-theme .calc-btn:hover {
-            background: rgba(0,0,0,0.12);
-        }
-        body.light-theme .calc-btn.op {
-            background: rgba(200,120,0,0.15);
-        }
-        body.light-theme .calc-btn.op:hover {
-            background: rgba(200,120,0,0.25);
-        }
-        body.light-theme .settings-section h3 {
-            color: #222;
-            border-bottom-color: rgba(0,0,0,0.1);
-        }
-        body.light-theme .process-item {
-            background: rgba(0,0,0,0.04);
-        }
-        body.light-theme .process-item .proc-name {
-            color: #222;
-        }
-        body.light-theme .store-item {
-            background: rgba(0,0,0,0.03);
-            border-color: rgba(0,0,0,0.05);
-        }
-        body.light-theme .store-item .app-name {
-            color: #222;
-        }
-        body.light-theme .store-item .app-desc {
-            color: #555;
-        }
-        body.light-theme .snake-score {
-            color: #222;
-        }
-        body.light-theme #snake-canvas {
-            background: #f0f0f0;
-        }
-        body.light-theme #paint-canvas {
-            background: white;
-        }
-        body.light-theme .paint-toolbar button {
-            background: rgba(0,0,0,0.05);
-            color: #222;
-        }
-        body.light-theme .paint-toolbar button:hover {
-            background: rgba(0,0,0,0.12);
-        }
     </style>
 </head>
 <body>
@@ -801,12 +880,15 @@
     <!-- УВЕДОМЛЕНИЯ -->
     <div id="notifications"></div>
 
+    <!-- КОНТЕКСТНОЕ МЕНЮ -->
+    <div id="context-menu"></div>
+
     <script>
         (function(){
             "use strict";
 
             // ============================================================
-            //  1. ЯДРО (KERNEL) – управление окнами и процессами
+            //  1. ЯДРО (KERNEL)
             // ============================================================
             const kernel = {
                 windows: [],
@@ -819,7 +901,6 @@
             const taskbarWindows = document.getElementById('taskbar-windows');
             const clockEl = document.getElementById('taskbar-clock');
 
-            // Часы + дата
             function updateClock() {
                 const now = new Date();
                 const h = String(now.getHours()).padStart(2,'0');
@@ -831,7 +912,6 @@
             updateClock();
             setInterval(updateClock, 1000);
 
-            // Создание окна
             function createWindow(title, contentHTML, options = {}) {
                 const id = kernel.nextId++;
                 const winObj = {
@@ -875,7 +955,6 @@
                 desktop.appendChild(win);
                 winObj.element = win;
 
-                // Обработчики кнопок
                 const closeBtn = header.querySelector('.close-btn');
                 const minBtn = header.querySelector('.min-btn');
                 const maxBtn = header.querySelector('.max-btn');
@@ -893,7 +972,6 @@
                     toggleMaximize(id);
                 });
 
-                // Перетаскивание
                 let isDragging = false;
                 let startX, startY, origLeft, origTop;
 
@@ -1017,12 +1095,9 @@
                 });
             }
 
-            // Свернуть все окна
             document.getElementById('collapse-all-btn').addEventListener('click', () => {
                 kernel.windows.forEach(w => {
-                    if (!w.isMinimized) {
-                        toggleMinimize(w.id);
-                    }
+                    if (!w.isMinimized) toggleMinimize(w.id);
                 });
                 showNotification('Все окна свёрнуты');
             });
@@ -1039,7 +1114,7 @@
             //  2. ФАЙЛОВАЯ СИСТЕМА (VFS)
             // ============================================================
             const FS = {
-                dbName: 'WebOS_FS',
+                dbName: 'NextelOS_FS',
                 storeName: 'files',
                 db: null,
 
@@ -1066,8 +1141,9 @@
                         await this.set('/', { type: 'folder', children: {} });
                         await this.set('/home', { type: 'folder', children: {} });
                         await this.set('/home/user', { type: 'folder', children: {} });
-                        await this.set('/home/user/readme.txt', { type: 'file', content: 'Добро пожаловать в Нашу ОС!' });
+                        await this.set('/home/user/readme.txt', { type: 'file', content: 'Добро пожаловать в NextelOS!' });
                         await this.set('/system', { type: 'folder', children: {} });
+                        await this.set('/system/trash', { type: 'folder', children: {} });
                     }
                 },
 
@@ -1194,7 +1270,7 @@
             }
 
             // ============================================================
-            //  4. РЕЕСТР ПРИЛОЖЕНИЙ (встроенные + установленные)
+            //  4. РЕЕСТР ПРИЛОЖЕНИЙ (без магазина, только встроенные)
             // ============================================================
             // Встроенные приложения (всегда доступны)
             const builtinApps = [
@@ -1204,44 +1280,34 @@
                 { id: 'calculator', label: 'Калькулятор', icon: '🧮', action: openCalculator },
                 { id: 'settings', label: 'Настройки', icon: '⚙️', action: openSettings },
                 { id: 'processes', label: 'Процессы', icon: '📊', action: openProcessManager },
-                { id: 'store', label: 'Магазин', icon: '🛒', action: openStore }
+                { id: 'trash', label: 'Корзина', icon: '🗑️', action: openTrash }
             ];
 
-            // Реестр установленных приложений (загружается из FS)
-            let installedApps = [];
-
-            function loadAppRegistry() {
-                return FS.get('/system/apps.json').then(data => {
-                    if (data && data.content) {
-                        try {
-                            installedApps = JSON.parse(data.content);
-                            return;
-                        } catch(e) {}
-                    }
-                    installedApps = [];
-                }).catch(() => { installedApps = []; });
-            }
-
-            function saveAppRegistry() {
-                return FS.write('/system/apps.json', JSON.stringify(installedApps));
-            }
-
-            // Получить все доступные приложения (встроенные + установленные)
             function getAllApps() {
-                const builtin = builtinApps.map(app => ({ ...app, builtin: true }));
-                const installed = installedApps.map(app => ({ ...app, builtin: false }));
-                return [...builtin, ...installed];
+                return builtinApps.map(app => ({ ...app, builtin: true }));
             }
 
             // ============================================================
-            //  5. ОТРИСОВКА ИКОНОК РАБОЧЕГО СТОЛА И МЕНЮ ПУСК
+            //  5. ИКОНКИ РАБОЧЕГО СТОЛА (с перетаскиванием и контекстным меню)
             // ============================================================
-            function renderDesktopIcons() {
-                // Удаляем все старые иконки (кроме окон и панели задач)
-                document.querySelectorAll('.desktop-icon').forEach(el => el.remove());
+            let iconPositions = {};
 
+            function loadIconPositions() {
+                try {
+                    const data = localStorage.getItem('nextelos-icon-positions');
+                    if (data) iconPositions = JSON.parse(data);
+                    else iconPositions = {};
+                } catch(e) { iconPositions = {}; }
+            }
+
+            function saveIconPositions() {
+                localStorage.setItem('nextelos-icon-positions', JSON.stringify(iconPositions));
+            }
+
+            function renderDesktopIcons() {
+                document.querySelectorAll('.desktop-icon').forEach(el => el.remove());
                 const apps = getAllApps();
-                const positions = [
+                const defaultPositions = [
                     { top: 30, left: 30 },
                     { top: 30, left: 130 },
                     { top: 30, left: 230 },
@@ -1257,47 +1323,208 @@
                 ];
 
                 apps.forEach((app, idx) => {
-                    const pos = positions[idx] || { top: 30 + Math.floor(idx/6)*110, left: 30 + (idx%6)*100 };
+                    let pos;
+                    if (iconPositions[app.id]) {
+                        pos = iconPositions[app.id];
+                    } else {
+                        const def = defaultPositions[idx] || { top: 30 + Math.floor(idx/6)*110, left: 30 + (idx%6)*100 };
+                        pos = { top: def.top, left: def.left };
+                        iconPositions[app.id] = pos;
+                    }
                     const icon = document.createElement('div');
                     icon.className = 'desktop-icon';
+                    icon.dataset.appId = app.id;
+                    icon.dataset.builtin = 'true';
                     icon.style.top = pos.top + 'px';
                     icon.style.left = pos.left + 'px';
                     icon.innerHTML = `<span class="icon">${app.icon}</span><span class="label">${app.label}</span>`;
-                    icon.addEventListener('click', app.action);
+                    icon.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        app.action();
+                    });
+                    makeDraggable(icon, app.id);
+                    icon.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showContextMenuForIcon(e.clientX, e.clientY, app);
+                    });
                     desktop.appendChild(icon);
                 });
+                saveIconPositions();
             }
 
-            // Меню Пуск (генерируется при клике)
-            document.getElementById('start-btn').addEventListener('click', () => {
-                const apps = getAllApps();
-                let menuHTML = '<div id="start-menu" style="display:flex; flex-direction:column; gap:6px;"></div>';
-                const winId = createWindow('Пуск', menuHTML, { width: 240, height: 350, left: 10, top: 80 });
+            function makeDraggable(icon, appId) {
+                let isDragging = false;
+                let startX, startY, origTop, origLeft;
 
-                setTimeout(() => {
-                    const menuContainer = document.getElementById('start-menu');
-                    if (!menuContainer) return;
-                    apps.forEach(app => {
-                        const btn = document.createElement('button');
-                        btn.style.cssText = 'background:rgba(255,255,255,0.05); border:none; color:white; padding:8px 12px; border-radius:4px; text-align:left; font-size:14px; transition:background 0.2s; cursor:pointer;';
-                        btn.textContent = `${app.icon} ${app.label}`;
-                        btn.addEventListener('mouseenter', () => btn.style.background = 'rgba(255,255,255,0.15)');
-                        btn.addEventListener('mouseleave', () => btn.style.background = 'rgba(255,255,255,0.05)');
-                        btn.addEventListener('click', () => {
-                            const winEl = document.querySelector(`.window[data-window-id="${winId}"]`);
-                            if (winEl) {
-                                const id = parseInt(winEl.dataset.windowId);
-                                if (id) closeWindow(id);
-                            }
-                            app.action();
+                icon.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    isDragging = true;
+                    const rect = icon.getBoundingClientRect();
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    origTop = parseInt(icon.style.top) || 0;
+                    origLeft = parseInt(icon.style.left) || 0;
+                    icon.classList.add('dragging');
+                    document.addEventListener('mousemove', onDragMove);
+                    document.addEventListener('mouseup', onDragEnd);
+                    e.preventDefault();
+                });
+
+                function onDragMove(e) {
+                    if (!isDragging) return;
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    icon.style.left = (origLeft + dx) + 'px';
+                    icon.style.top = (origTop + dy) + 'px';
+                }
+
+                function onDragEnd(e) {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    icon.classList.remove('dragging');
+                    document.removeEventListener('mousemove', onDragMove);
+                    document.removeEventListener('mouseup', onDragEnd);
+                    const left = parseInt(icon.style.left) || 0;
+                    const top = parseInt(icon.style.top) || 0;
+                    iconPositions[appId] = { left, top };
+                    saveIconPositions();
+                }
+            }
+
+            function showContextMenuForIcon(x, y, app) {
+                const menu = document.getElementById('context-menu');
+                menu.innerHTML = '';
+                addMenuItem('▶ Запустить', () => { app.action(); hideContextMenu(); });
+                addMenuItem('📌 Переименовать', () => {
+                    const newName = prompt('Введите новое имя:', app.label);
+                    if (newName && newName.trim()) {
+                        // только для установленных (но у нас их нет, поэтому просто уведомление)
+                        showNotification('Встроенные приложения нельзя переименовывать', 'warning');
+                    }
+                    hideContextMenu();
+                });
+                addMenuDivider();
+                addMenuItem('ℹ Встроенное приложение', null, false);
+
+                menu.style.display = 'block';
+                menu.style.left = x + 'px';
+                menu.style.top = y + 'px';
+                const rect = menu.getBoundingClientRect();
+                if (rect.right > window.innerWidth) {
+                    menu.style.left = (x - rect.width) + 'px';
+                }
+                if (rect.bottom > window.innerHeight) {
+                    menu.style.top = (y - rect.height) + 'px';
+                }
+
+                function addMenuItem(text, action, danger = false) {
+                    const item = document.createElement('div');
+                    item.className = 'menu-item' + (danger ? ' danger' : '');
+                    item.textContent = text;
+                    if (action) {
+                        item.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            action();
                         });
-                        menuContainer.appendChild(btn);
-                    });
-                }, 100);
+                    } else {
+                        item.style.cursor = 'default';
+                        item.style.opacity = '0.6';
+                    }
+                    menu.appendChild(item);
+                }
+
+                function addMenuDivider() {
+                    const div = document.createElement('div');
+                    div.className = 'menu-divider';
+                    menu.appendChild(div);
+                }
+            }
+
+            function hideContextMenu() {
+                document.getElementById('context-menu').style.display = 'none';
+            }
+
+            document.addEventListener('click', (e) => {
+                const menu = document.getElementById('context-menu');
+                if (menu && !menu.contains(e.target)) {
+                    hideContextMenu();
+                }
             });
 
+            // Контекстное меню на рабочем столе
+            desktop.addEventListener('contextmenu', (e) => {
+                if (e.target === desktop || e.target === document.getElementById('desktop')) {
+                    e.preventDefault();
+                    const menu = document.getElementById('context-menu');
+                    menu.innerHTML = '';
+                    addMenuItem('📁 Создать папку', async () => {
+                        const name = prompt('Введите имя папки:');
+                        if (name) {
+                            try {
+                                await FS.mkdir('/home/user/' + name);
+                                showNotification(`Папка "${name}" создана`);
+                            } catch(err) {
+                                showNotification('Ошибка: ' + err.message, 'error');
+                            }
+                        }
+                        hideContextMenu();
+                    });
+                    addMenuItem('📄 Создать файл', async () => {
+                        const name = prompt('Введите имя файла:');
+                        if (name) {
+                            try {
+                                await FS.touch('/home/user/' + name, '');
+                                showNotification(`Файл "${name}" создан`);
+                            } catch(err) {
+                                showNotification('Ошибка: ' + err.message, 'error');
+                            }
+                        }
+                        hideContextMenu();
+                    });
+                    addMenuDivider();
+                    addMenuItem('🔄 Обновить', () => {
+                        renderDesktopIcons();
+                        hideContextMenu();
+                        showNotification('Рабочий стол обновлён');
+                    });
+                    addMenuItem('⚙️ Настройки', () => {
+                        openSettings();
+                        hideContextMenu();
+                    });
+                    menu.style.display = 'block';
+                    menu.style.left = e.clientX + 'px';
+                    menu.style.top = e.clientY + 'px';
+                    const rect = menu.getBoundingClientRect();
+                    if (rect.right > window.innerWidth) {
+                        menu.style.left = (e.clientX - rect.width) + 'px';
+                    }
+                    if (rect.bottom > window.innerHeight) {
+                        menu.style.top = (e.clientY - rect.height) + 'px';
+                    }
+                }
+            });
+
+            function addMenuItem(text, action) {
+                const item = document.createElement('div');
+                item.className = 'menu-item';
+                item.textContent = text;
+                if (action) {
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        action();
+                    });
+                }
+                document.getElementById('context-menu').appendChild(item);
+            }
+            function addMenuDivider() {
+                const div = document.createElement('div');
+                div.className = 'menu-divider';
+                document.getElementById('context-menu').appendChild(div);
+            }
+
             // ============================================================
-            //  6. ПРИЛОЖЕНИЯ (встроенные)
+            //  6. ПРИЛОЖЕНИЯ
             // ============================================================
 
             // ----- 6.1 Терминал -----
@@ -1410,7 +1637,7 @@
                         input.focus();
                     };
 
-                    appendOutput('Добро пожаловать в Терминал Нашей ОС! (v1.0)');
+                    appendOutput('Добро пожаловать в Терминал NextelOS');
                     appendOutput('Введите help для списка команд.');
                     appendOutput(`\n${currentDir} $ `);
 
@@ -1499,13 +1726,33 @@
                             const delBtn = div.querySelector('.fm-del');
                             delBtn.addEventListener('click', async (e) => {
                                 e.stopPropagation();
-                                if (confirm(`Удалить "${name}"?`)) {
+                                if (confirm(`Переместить "${name}" в корзину?`)) {
                                     try {
+                                        // Перемещаем в /system/trash
+                                        const trashPath = '/system/trash/' + name;
+                                        // Проверяем, нет ли уже такого в корзине
+                                        const existing = await FS.stat(trashPath);
+                                        if (existing) {
+                                            showNotification('Файл с таким именем уже есть в корзине', 'warning');
+                                            return;
+                                        }
+                                        // Копируем содержимое
+                                        const stat = await FS.stat(fullPath);
+                                        if (stat.type === 'file') {
+                                            const content = await FS.cat(fullPath);
+                                            await FS.touch(trashPath, content);
+                                        } else {
+                                            // Папку перемещаем рекурсивно (упрощённо: просто создаём папку и копируем файлы)
+                                            // Для простоты покажем уведомление
+                                            showNotification('Перемещение папок в корзину пока не поддерживается', 'warning');
+                                            return;
+                                        }
+                                        // Удаляем оригинал
                                         await FS.rm(fullPath);
-                                        showNotification(`"${name}" удалён`);
+                                        showNotification(`"${name}" перемещён в корзину`);
                                         renderList();
                                     } catch(err) {
-                                        showNotification('Ошибка удаления: ' + err.message, 'error');
+                                        showNotification('Ошибка: ' + err.message, 'error');
                                     }
                                 }
                             });
@@ -1776,29 +2023,35 @@
             // ----- 6.5 Настройки -----
             function openSettings() {
                 const wallpapers = [
-                    { name: 'Город', url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%232c3e50"/><rect x="20" y="60" width="30" height="90" fill="%233a5a7a"/><rect x="60" y="40" width="30" height="110" fill="%233a5a7a"/><rect x="100" y="70" width="30" height="80" fill="%233a5a7a"/><rect x="140" y="30" width="30" height="120" fill="%233a5a7a"/><circle cx="50" cy="20" r="15" fill="%23f1c40f"/></svg>' },
-                    { name: 'Природа', url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%2327ae60"/><rect y="100" width="200" height="50" fill="%232d7d46"/><circle cx="40" cy="60" r="30" fill="%232d7d46"/><circle cx="100" cy="40" r="40" fill="%232d7d46"/><circle cx="170" cy="55" r="35" fill="%232d7d46"/><circle cx="50" cy="15" r="8" fill="%23f39c12"/></svg>' },
-                    { name: 'Космос', url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%230b0b1a"/><circle cx="30" cy="30" r="4" fill="white"/><circle cx="80" cy="20" r="2" fill="white"/><circle cx="150" cy="40" r="3" fill="white"/><circle cx="170" cy="100" r="5" fill="white"/><circle cx="120" cy="120" r="2" fill="white"/><ellipse cx="100" cy="75" rx="40" ry="20" fill="%23f1c40f" opacity="0.3"/></svg>' },
+                    { name: 'Город ночью', url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%231a1a2e"/><rect x="20" y="60" width="30" height="90" fill="%232c3e50"/><rect x="60" y="40" width="30" height="110" fill="%232c3e50"/><rect x="100" y="70" width="30" height="80" fill="%232c3e50"/><rect x="140" y="30" width="30" height="120" fill="%232c3e50"/><circle cx="50" cy="20" r="10" fill="%23f1c40f" opacity="0.8"/><circle cx="120" cy="15" r="6" fill="%23f1c40f" opacity="0.6"/></svg>' },
+                    { name: 'Лес', url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%2327ae60"/><rect y="100" width="200" height="50" fill="%232d7d46"/><circle cx="30" cy="60" r="35" fill="%232d7d46"/><circle cx="100" cy="40" r="45" fill="%232d7d46"/><circle cx="170" cy="55" r="40" fill="%232d7d46"/><circle cx="50" cy="15" r="10" fill="%23f39c12"/></svg>' },
+                    { name: 'Космос', url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%230b0b1a"/><circle cx="30" cy="30" r="5" fill="white"/><circle cx="80" cy="20" r="3" fill="white"/><circle cx="150" cy="40" r="4" fill="white"/><circle cx="170" cy="100" r="6" fill="white"/><circle cx="120" cy="120" r="3" fill="white"/><ellipse cx="100" cy="75" rx="40" ry="20" fill="%23f1c40f" opacity="0.3"/></svg>' },
+                    { name: 'Абстракция', url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%234a69bd"/><circle cx="50" cy="50" r="40" fill="%23f39c12" opacity="0.5"/><circle cx="150" cy="100" r="50" fill="%23e74c3c" opacity="0.4"/><rect x="80" y="20" width="60" height="60" fill="%232ecc71" opacity="0.3"/></svg>' },
+                    { name: 'Закат', url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%23f39c12"/><rect y="80" width="200" height="70" fill="%23e67e22"/><circle cx="100" cy="70" r="40" fill="%23e74c3c" opacity="0.6"/><circle cx="30" cy="130" r="20" fill="%23d35400" opacity="0.3"/></svg>' },
+                    { name: 'Горы', url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%235dade2"/><polygon points="0,120 60,40 120,120" fill="%232d7d46"/><polygon points="80,120 140,30 200,120" fill="%231f6182"/><rect y="120" width="200" height="30" fill="%231a4d3a"/></svg>' },
+                    { name: 'Цветы', url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%23f8c8d8"/><circle cx="40" cy="40" r="20" fill="%23e91e63" opacity="0.7"/><circle cx="80" cy="60" r="25" fill="%23ff4081" opacity="0.6"/><circle cx="140" cy="50" r="22" fill="%23f50057" opacity="0.5"/><circle cx="60" cy="100" r="18" fill="%23c2185b" opacity="0.4"/><circle cx="130" cy="110" r="20" fill="%23e91e63" opacity="0.4"/></svg>' },
+                    { name: 'Тёплые тона', url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%23ff8a65"/><rect x="0" y="0" width="100" height="75" fill="%23ffab91" opacity="0.5"/><rect x="100" y="75" width="100" height="75" fill="%23ff6e40" opacity="0.5"/><circle cx="150" cy="30" r="30" fill="%23ffccbc" opacity="0.3"/></svg>' },
+                    { name: 'Холодные тона', url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%234fc3f7"/><rect x="0" y="0" width="100" height="75" fill="%2381d4fa" opacity="0.5"/><rect x="100" y="75" width="100" height="75" fill="%2329b6f6" opacity="0.5"/><circle cx="50" cy="100" r="30" fill="%23b3e5fc" opacity="0.3"/></svg>' },
                     { name: 'Обои по умолчанию', url: '' }
                 ];
 
-                let currentTheme = localStorage.getItem('webos-theme') || 'dark';
+                let currentTheme = localStorage.getItem('nextelos-theme') || 'dark';
 
                 const content = `
                     <div class="settings-section">
-                        <h3>🖼 Обои рабочего стола</h3>
+                        <h3>Обои рабочего стола</h3>
                         <div class="wallpaper-grid" id="wallpaper-grid"></div>
                     </div>
                     <div class="settings-section">
-                        <h3>🌗 Тема оформления</h3>
+                        <h3>Тема оформления</h3>
                         <div class="theme-buttons">
                             <button data-theme="dark" class="${currentTheme === 'dark' ? 'active' : ''}">Тёмная</button>
                             <button data-theme="light" class="${currentTheme === 'light' ? 'active' : ''}">Светлая</button>
                         </div>
                     </div>
                     <div class="settings-section">
-                        <h3>ℹ О системе</h3>
-                        <p style="color:#888;">Наша Веб-ОС v1.0<br>Ядро: JavaScript<br>Файловая система: IndexedDB</p>
+                        <h3>О системе</h3>
+                        <p style="color:#888;">NextelOS v1.0<br>Ядро: JavaScript<br>Файловая система: IndexedDB</p>
                     </div>
                 `;
                 const winId = createWindow('Настройки', content, { width: 450, height: 400 });
@@ -1818,7 +2071,7 @@
                             if (wp.url && currentBg.includes(wp.url)) {
                                 div.classList.add('active');
                             } else if (!wp.url && !currentBg) {
-                                if (!localStorage.getItem('webos-wallpaper')) {
+                                if (!localStorage.getItem('nextelos-wallpaper')) {
                                     div.classList.add('active');
                                 }
                             }
@@ -1830,11 +2083,11 @@
                                 if (wp.url) {
                                     desktop.style.backgroundImage = `url("${wp.url}")`;
                                     desktop.style.backgroundSize = 'cover';
-                                    localStorage.setItem('webos-wallpaper', wp.url);
+                                    localStorage.setItem('nextelos-wallpaper', wp.url);
                                 } else {
                                     desktop.style.backgroundImage = '';
                                     desktop.style.background = '#2c3e50';
-                                    localStorage.removeItem('webos-wallpaper');
+                                    localStorage.removeItem('nextelos-wallpaper');
                                 }
                                 showNotification('Обои изменены');
                             });
@@ -1849,7 +2102,7 @@
                             btn.classList.add('active');
                             const theme = btn.dataset.theme;
                             document.body.classList.toggle('light-theme', theme === 'light');
-                            localStorage.setItem('webos-theme', theme);
+                            localStorage.setItem('nextelos-theme', theme);
                             showNotification(`Тема: ${theme === 'light' ? 'Светлая' : 'Тёмная'}`);
                         });
                     });
@@ -1893,378 +2146,175 @@
                 setTimeout(renderProcesses, 100);
             }
 
-            // ============================================================
-            //  7. МАГАЗИН ПРИЛОЖЕНИЙ
-            // ============================================================
-            // Доступные для установки приложения (каталог)
-            const storeCatalog = [
-                {
-                    id: 'snake',
-                    name: 'Змейка',
-                    icon: '🐍',
-                    description: 'Классическая игра, собирай еду и не врезайся.',
-                    install: () => {
-                        // Проверяем, не установлено ли уже
-                        if (installedApps.find(a => a.id === 'snake')) {
-                            showNotification('Уже установлено', 'warning');
+            // ----- 6.7 Корзина -----
+            async function openTrash() {
+                const content = `
+                    <div class="trash-toolbar">
+                        <button id="trash-empty">Очистить корзину</button>
+                        <button id="trash-refresh">🔄 Обновить</button>
+                    </div>
+                    <div id="trash-list"></div>
+                `;
+                const winId = createWindow('Корзина', content, { width: 500, height: 350 });
+
+                const renderTrash = async () => {
+                    const list = document.getElementById('trash-list');
+                    if (!list) return;
+                    try {
+                        const items = await FS.ls('/system/trash');
+                        list.innerHTML = '';
+                        if (items.length === 0) {
+                            list.innerHTML = '<div class="trash-empty">Корзина пуста</div>';
                             return;
                         }
-                        installedApps.push({
-                            id: 'snake',
-                            label: 'Змейка',
-                            icon: '🐍',
-                            action: openSnakeGame
-                        });
-                        saveAppRegistry().then(() => {
-                            renderDesktopIcons();
-                            showNotification('Змейка установлена!');
-                        });
-                    }
-                },
-                {
-                    id: 'paint',
-                    name: 'Рисовалка',
-                    icon: '🎨',
-                    description: 'Рисуй мышкой на холсте. Сохраняй в файл.',
-                    install: () => {
-                        if (installedApps.find(a => a.id === 'paint')) {
-                            showNotification('Уже установлено', 'warning');
-                            return;
-                        }
-                        installedApps.push({
-                            id: 'paint',
-                            label: 'Рисовалка',
-                            icon: '🎨',
-                            action: openPaintApp
-                        });
-                        saveAppRegistry().then(() => {
-                            renderDesktopIcons();
-                            showNotification('Рисовалка установлена!');
-                        });
-                    }
-                },
-                {
-                    id: 'weather',
-                    name: 'Погода',
-                    icon: '🌤',
-                    description: 'Показывает текущую погоду (заглушка).',
-                    install: () => {
-                        if (installedApps.find(a => a.id === 'weather')) {
-                            showNotification('Уже установлено', 'warning');
-                            return;
-                        }
-                        installedApps.push({
-                            id: 'weather',
-                            label: 'Погода',
-                            icon: '🌤',
-                            action: openWeatherApp
-                        });
-                        saveAppRegistry().then(() => {
-                            renderDesktopIcons();
-                            showNotification('Погода установлена!');
-                        });
-                    }
-                }
-            ];
-
-            function openStore() {
-                let html = `<div class="store-grid">`;
-                storeCatalog.forEach(app => {
-                    const isInstalled = installedApps.some(a => a.id === app.id);
-                    html += `
-                        <div class="store-item">
-                            <div class="app-icon">${app.icon}</div>
-                            <div class="app-name">${app.name}</div>
-                            <div class="app-desc">${app.description}</div>
-                            <div class="app-actions">
-                                ${isInstalled ? 
-                                    `<span class="installed-badge">✅ Установлено</span>
-                                     <button class="uninstall-btn" data-id="${app.id}">Удалить</button>` :
-                                    `<button class="install-btn" data-id="${app.id}">Установить</button>`
-                                }
-                            </div>
-                        </div>
-                    `;
-                });
-                html += `</div>`;
-                const winId = createWindow('Магазин приложений', html, { width: 600, height: 500 });
-
-                setTimeout(() => {
-                    document.querySelectorAll('.install-btn').forEach(btn => {
-                        btn.addEventListener('click', () => {
-                            const id = btn.dataset.id;
-                            const catalogApp = storeCatalog.find(a => a.id === id);
-                            if (catalogApp) {
-                                catalogApp.install();
-                                // Закрываем магазин и открываем заново, чтобы обновить кнопки
-                                const winEl = document.querySelector(`.window[data-window-id="${winId}"]`);
-                                if (winEl) {
-                                    const wId = parseInt(winEl.dataset.windowId);
-                                    if (wId) closeWindow(wId);
-                                }
-                                setTimeout(openStore, 300);
-                            }
-                        });
-                    });
-
-                    document.querySelectorAll('.uninstall-btn').forEach(btn => {
-                        btn.addEventListener('click', () => {
-                            const id = btn.dataset.id;
-                            if (confirm(`Удалить приложение?`)) {
-                                installedApps = installedApps.filter(a => a.id !== id);
-                                saveAppRegistry().then(() => {
-                                    renderDesktopIcons();
-                                    showNotification('Приложение удалено');
-                                    // Обновить магазин
-                                    const winEl = document.querySelector(`.window[data-window-id="${winId}"]`);
-                                    if (winEl) {
-                                        const wId = parseInt(winEl.dataset.windowId);
-                                        if (wId) closeWindow(wId);
+                        for (const name of items) {
+                            const fullPath = '/system/trash/' + name;
+                            const stat = await FS.stat(fullPath);
+                            const isFolder = stat && stat.type === 'folder';
+                            const div = document.createElement('div');
+                            div.className = 'trash-item';
+                            div.innerHTML = `
+                                <span class="trash-icon">${isFolder ? '📁' : '📄'}</span>
+                                <span class="trash-name">${name}</span>
+                                <span class="trash-actions">
+                                    <button class="restore-btn" data-path="${fullPath}" data-name="${name}">↩️ Восстановить</button>
+                                    <button class="delete-btn" data-path="${fullPath}" data-name="${name}">🗑 Удалить навсегда</button>
+                                </span>
+                            `;
+                            // Восстановление
+                            const restoreBtn = div.querySelector('.restore-btn');
+                            restoreBtn.addEventListener('click', async (e) => {
+                                e.stopPropagation();
+                                try {
+                                    const destPath = '/home/user/' + name;
+                                    // Проверяем, не существует ли уже
+                                    const existing = await FS.stat(destPath);
+                                    if (existing) {
+                                        if (!confirm(`Файл "${name}" уже существует в домашней папке. Заменить?`)) return;
+                                        await FS.rm(destPath);
                                     }
-                                    setTimeout(openStore, 300);
-                                });
-                            }
-                        });
-                    });
-                }, 100);
-            }
-
-            // ============================================================
-            //  8. НОВЫЕ ПРИЛОЖЕНИЯ (для магазина)
-            // ============================================================
-
-            // ----- 8.1 Змейка -----
-            function openSnakeGame() {
-                const content = `
-                    <div class="snake-score">Счёт: <span id="snake-score">0</span></div>
-                    <canvas id="snake-canvas" width="400" height="400"></canvas>
-                `;
-                const winId = createWindow('Змейка', content, { width: 420, height: 480 });
+                                    // Копируем содержимое
+                                    if (stat.type === 'file') {
+                                        const content = await FS.cat(fullPath);
+                                        await FS.touch(destPath, content);
+                                    } else {
+                                        // Папки пока не поддерживаем
+                                        showNotification('Восстановление папок пока не поддерживается', 'warning');
+                                        return;
+                                    }
+                                    // Удаляем из корзины
+                                    await FS.rm(fullPath);
+                                    showNotification(`"${name}" восстановлен`);
+                                    renderTrash();
+                                } catch(err) {
+                                    showNotification('Ошибка: ' + err.message, 'error');
+                                }
+                            });
+                            // Удаление навсегда
+                            const deleteBtn = div.querySelector('.delete-btn');
+                            deleteBtn.addEventListener('click', async (e) => {
+                                e.stopPropagation();
+                                if (confirm(`Удалить "${name}" навсегда?`)) {
+                                    try {
+                                        await FS.rm(fullPath);
+                                        showNotification(`"${name}" удалён навсегда`);
+                                        renderTrash();
+                                    } catch(err) {
+                                        showNotification('Ошибка: ' + err.message, 'error');
+                                    }
+                                }
+                            });
+                            list.appendChild(div);
+                        }
+                    } catch(e) {
+                        list.innerHTML = `<div style="color:#ff5555;">Ошибка: ${e.message}</div>`;
+                    }
+                };
 
                 setTimeout(() => {
-                    const canvas = document.getElementById('snake-canvas');
-                    const ctx = canvas.getContext('2d');
-                    const scoreSpan = document.getElementById('snake-score');
-
-                    const box = 20;
-                    const cols = canvas.width / box;
-                    const rows = canvas.height / box;
-                    let snake = [{ x: 5, y: 5 }];
-                    let direction = 'RIGHT';
-                    let nextDirection = 'RIGHT';
-                    let food = { x: 8, y: 8 };
-                    let score = 0;
-                    let gameOver = false;
-                    let interval = null;
-
-                    const draw = () => {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        // Змея
-                        ctx.fillStyle = '#50fa7b';
-                        snake.forEach((seg, idx) => {
-                            ctx.fillRect(seg.x * box, seg.y * box, box-2, box-2);
-                            if (idx === 0) {
-                                ctx.fillStyle = '#8be9fd';
-                                ctx.fillRect(seg.x * box, seg.y * box, box-2, box-2);
-                                ctx.fillStyle = '#50fa7b';
+                    const emptyBtn = document.getElementById('trash-empty');
+                    const refreshBtn = document.getElementById('trash-refresh');
+                    if (emptyBtn) {
+                        emptyBtn.addEventListener('click', async () => {
+                            if (confirm('Очистить корзину навсегда?')) {
+                                try {
+                                    const items = await FS.ls('/system/trash');
+                                    for (const name of items) {
+                                        await FS.rm('/system/trash/' + name);
+                                    }
+                                    showNotification('Корзина очищена');
+                                    renderTrash();
+                                } catch(err) {
+                                    showNotification('Ошибка: ' + err.message, 'error');
+                                }
                             }
                         });
-                        // Еда
-                        ctx.fillStyle = '#ff5555';
-                        ctx.fillRect(food.x * box, food.y * box, box-2, box-2);
-                    };
-
-                    const move = () => {
-                        if (gameOver) return;
-                        direction = nextDirection;
-                        const head = { ...snake[0] };
-                        switch(direction) {
-                            case 'UP': head.y--; break;
-                            case 'DOWN': head.y++; break;
-                            case 'LEFT': head.x--; break;
-                            case 'RIGHT': head.x++; break;
-                        }
-                        // Проверка столкновения с едой
-                        if (head.x === food.x && head.y === food.y) {
-                            snake.unshift(head);
-                            score++;
-                            scoreSpan.textContent = score;
-                            generateFood();
-                        } else {
-                            snake.pop();
-                            snake.unshift(head);
-                        }
-                        // Проверка столкновения со стенами или самой собой
-                        if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows ||
-                            snake.slice(1).some(seg => seg.x === head.x && seg.y === head.y)) {
-                            gameOver = true;
-                            clearInterval(interval);
-                            showNotification('Игра окончена! Счёт: ' + score, 'warning');
-                            return;
-                        }
-                        draw();
-                    };
-
-                    const generateFood = () => {
-                        let pos;
-                        do {
-                            pos = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
-                        } while (snake.some(seg => seg.x === pos.x && seg.y === pos.y));
-                        food = pos;
-                    };
-
-                    const keyHandler = (e) => {
-                        const key = e.key;
-                        e.preventDefault();
-                        if (gameOver) return;
-                        if (key === 'ArrowUp' && direction !== 'DOWN') nextDirection = 'UP';
-                        else if (key === 'ArrowDown' && direction !== 'UP') nextDirection = 'DOWN';
-                        else if (key === 'ArrowLeft' && direction !== 'RIGHT') nextDirection = 'LEFT';
-                        else if (key === 'ArrowRight' && direction !== 'LEFT') nextDirection = 'RIGHT';
-                    };
-
-                    window.addEventListener('keydown', keyHandler);
-                    // Остановка игры при закрытии окна
-                    const closeHandler = () => {
-                        clearInterval(interval);
-                        window.removeEventListener('keydown', keyHandler);
-                    };
-                    // Добавляем onClose для очистки
-                    const winObj = kernel.windows.find(w => w.id === winId);
-                    if (winObj) winObj.onClose = closeHandler;
-
-                    generateFood();
-                    interval = setInterval(move, 150);
-                    draw();
-
-                    // Фокус на окне для клавиш
-                    canvas.focus();
-                    canvas.setAttribute('tabindex', '0');
+                    }
+                    if (refreshBtn) {
+                        refreshBtn.addEventListener('click', renderTrash);
+                    }
+                    renderTrash();
                 }, 100);
             }
 
-            // ----- 8.2 Рисовалка -----
-            function openPaintApp() {
-                const content = `
-                    <div class="paint-toolbar">
-                        <button id="paint-clear">Очистить</button>
-                        <button id="paint-save">💾 Сохранить в файл</button>
-                        <span style="color:#888; font-size:13px;">Цвет: <input type="color" id="paint-color" value="#000000"></span>
-                    </div>
-                    <canvas id="paint-canvas" width="500" height="400"></canvas>
-                `;
-                const winId = createWindow('Рисовалка', content, { width: 540, height: 500 });
+            // ============================================================
+            //  7. МЕНЮ ПУСК
+            // ============================================================
+            document.getElementById('start-btn').addEventListener('click', () => {
+                const apps = getAllApps();
+                let menuHTML = '<div id="start-menu" style="display:flex; flex-direction:column; gap:6px;"></div>';
+                const winId = createWindow('Пуск', menuHTML, { width: 240, height: 350, left: 10, top: 80 });
 
                 setTimeout(() => {
-                    const canvas = document.getElementById('paint-canvas');
-                    const ctx = canvas.getContext('2d');
-                    const colorPicker = document.getElementById('paint-color');
-                    let isDrawing = false;
-                    let lastX, lastY;
-
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                    const draw = (x, y) => {
-                        ctx.beginPath();
-                        ctx.arc(x, y, 4, 0, 2 * Math.PI);
-                        ctx.fillStyle = colorPicker.value;
-                        ctx.fill();
-                    };
-
-                    canvas.addEventListener('mousedown', (e) => {
-                        isDrawing = true;
-                        const rect = canvas.getBoundingClientRect();
-                        lastX = e.clientX - rect.left;
-                        lastY = e.clientY - rect.top;
-                        draw(lastX, lastY);
-                    });
-
-                    canvas.addEventListener('mousemove', (e) => {
-                        if (!isDrawing) return;
-                        const rect = canvas.getBoundingClientRect();
-                        const x = e.clientX - rect.left;
-                        const y = e.clientY - rect.top;
-                        // рисуем линию между точками
-                        ctx.beginPath();
-                        ctx.moveTo(lastX, lastY);
-                        ctx.lineTo(x, y);
-                        ctx.strokeStyle = colorPicker.value;
-                        ctx.lineWidth = 8;
-                        ctx.stroke();
-                        ctx.lineWidth = 1;
-                        lastX = x;
-                        lastY = y;
-                    });
-
-                    canvas.addEventListener('mouseup', () => { isDrawing = false; });
-                    canvas.addEventListener('mouseleave', () => { isDrawing = false; });
-
-                    document.getElementById('paint-clear').addEventListener('click', () => {
-                        ctx.fillStyle = 'white';
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    });
-
-                    document.getElementById('paint-save').addEventListener('click', async () => {
-                        const dataUrl = canvas.toDataURL('image/png');
-                        // Сохраняем в файловую систему (как base64)
-                        const path = prompt('Введите имя файла для сохранения (например, /home/user/рисунок.png):', '/home/user/рисунок.png');
-                        if (path) {
-                            try {
-                                await FS.touch(path, dataUrl);
-                                showNotification('Рисунок сохранён');
-                            } catch(e) {
-                                showNotification('Ошибка сохранения: ' + e.message, 'error');
+                    const menuContainer = document.getElementById('start-menu');
+                    if (!menuContainer) return;
+                    apps.forEach(app => {
+                        const btn = document.createElement('button');
+                        btn.style.cssText = 'background:rgba(255,255,255,0.05); border:none; color:white; padding:8px 12px; border-radius:4px; text-align:left; font-size:14px; transition:background 0.2s; cursor:pointer;';
+                        btn.textContent = `${app.icon} ${app.label}`;
+                        btn.addEventListener('mouseenter', () => btn.style.background = 'rgba(255,255,255,0.15)');
+                        btn.addEventListener('mouseleave', () => btn.style.background = 'rgba(255,255,255,0.05)');
+                        btn.addEventListener('click', () => {
+                            const winEl = document.querySelector(`.window[data-window-id="${winId}"]`);
+                            if (winEl) {
+                                const id = parseInt(winEl.dataset.windowId);
+                                if (id) closeWindow(id);
                             }
-                        }
+                            app.action();
+                        });
+                        menuContainer.appendChild(btn);
                     });
                 }, 100);
-            }
-
-            // ----- 8.3 Погода (заглушка) -----
-            function openWeatherApp() {
-                const content = `
-                    <div style="text-align:center; padding:20px;">
-                        <div style="font-size:64px;">🌤</div>
-                        <div style="font-size:28px; color:#ddd;">+22°C</div>
-                        <div style="color:#888; font-size:18px;">Солнечно</div>
-                        <div style="margin-top:20px; color:#666; font-size:14px;">Данные заглушки. Подключи API для реальной погоды.</div>
-                    </div>
-                `;
-                createWindow('Погода', content, { width: 300, height: 250 });
-            }
+            });
 
             // ============================================================
-            //  9. ИНИЦИАЛИЗАЦИЯ И ЗАПУСК
+            //  8. ВОССТАНОВЛЕНИЕ НАСТРОЕК
             // ============================================================
-
-            // Функция восстановления настроек
             function restoreSettings() {
-                const savedTheme = localStorage.getItem('webos-theme');
+                const savedTheme = localStorage.getItem('nextelos-theme');
                 if (savedTheme === 'light') {
                     document.body.classList.add('light-theme');
                 }
-                const savedWallpaper = localStorage.getItem('webos-wallpaper');
+                const savedWallpaper = localStorage.getItem('nextelos-wallpaper');
                 if (savedWallpaper) {
                     document.getElementById('desktop').style.backgroundImage = `url("${savedWallpaper}")`;
                     document.getElementById('desktop').style.backgroundSize = 'cover';
                 }
             }
 
-            // Старт
+            // ============================================================
+            //  9. ИНИЦИАЛИЗАЦИЯ
+            // ============================================================
+            loadIconPositions();
+
             FS.init()
                 .then(() => {
                     fsReady = true;
-                    return loadAppRegistry();
-                })
-                .then(() => {
                     restoreSettings();
                     renderDesktopIcons();
-                    showNotification('Система загружена! Добро пожаловать.');
-
-                    // Приветственное окно
+                    showNotification('NextelOS загружена. Перетаскивай иконки, правый клик для меню.');
                     setTimeout(() => {
-                        createWindow('Привет', '👋 Добро пожаловать в <b>Нашу Веб-ОС</b>!<br><br>Установи новые приложения из <b>Магазина</b>.');
+                        createWindow('Привет', '👋 Добро пожаловать в <b>NextelOS</b>!<br>Иконки можно перетаскивать, файлы удаляются в корзину.');
                     }, 500);
                 })
                 .catch(err => {
@@ -2280,15 +2330,12 @@
             window.openCalculator = openCalculator;
             window.openSettings = openSettings;
             window.openProcessManager = openProcessManager;
-            window.openStore = openStore;
-            window.openSnakeGame = openSnakeGame;
-            window.openPaintApp = openPaintApp;
-            window.openWeatherApp = openWeatherApp;
+            window.openTrash = openTrash;
             window.createWindow = createWindow;
             window.showNotification = showNotification;
             window.renderDesktopIcons = renderDesktopIcons;
 
-            console.log('Наша Веб-ОС с магазином загружена!');
+            console.log('NextelOS загружена!');
         })();
     </script>
 </body>
