@@ -1,30 +1,10 @@
-/* ============================================================
-   БАЗОВЫЕ СТИЛИ
-   ============================================================ */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  user-select: none;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-}
-body {
-  height: 100vh;
-  overflow: hidden;
-  background: #1a1a2e;
-}
-button {
-  cursor: pointer;
-  border: none;
-  background: none;
-}
-input, textarea {
-  font-family: inherit;
-}
+/* ===== БАЗОВЫЕ СТИЛИ ===== */
+* { margin:0; padding:0; box-sizing:border-box; user-select:none; font-family:'Segoe UI',Tahoma,sans-serif; }
+body { height:100vh; overflow:hidden; background:#1a1a2e; }
+button { cursor:pointer; border:none; background:none; }
+input, textarea { font-family:inherit; }
 
-/* ============================================================
-   ПЕРЕМЕННЫЕ ДЛЯ ТЕМ
-   ============================================================ */
+/* ===== ПЕРЕМЕННЫЕ ===== */
 :root {
   --bg-desktop: #2c3e50;
   --bg-window: rgba(30,30,46,0.92);
@@ -49,1579 +29,373 @@ body.light-theme {
   --bg-hover: rgba(0,0,0,0.05);
   --bg-taskbar: rgba(240,240,240,0.85);
 }
-body.theme-ocean {
-  --bg-desktop: #0c2461;
-  --bg-window: rgba(9,53,123,0.92);
-  --accent: #4a7cbd;
-  --text-primary: #c8e6ff;
-}
-body.theme-forest {
-  --bg-desktop: #1a3a1a;
-  --bg-window: rgba(26,58,26,0.92);
-  --accent: #2e7d32;
-  --text-primary: #a5d6a7;
-}
-body.theme-sunset {
-  --bg-desktop: #4a1a3a;
-  --bg-window: rgba(74,26,58,0.92);
-  --accent: #c94a7a;
-  --text-primary: #f8bbd0;
-}
-body.theme-mono {
-  --bg-desktop: #333;
-  --bg-window: rgba(50,50,50,0.92);
-  --accent: #888;
-  --text-primary: #ccc;
-}
+body.theme-ocean { --bg-desktop:#0c2461; --bg-window:rgba(9,53,123,0.92); --accent:#4a7cbd; --text-primary:#c8e6ff; }
+body.theme-forest { --bg-desktop:#1a3a1a; --bg-window:rgba(26,58,26,0.92); --accent:#2e7d32; --text-primary:#a5d6a7; }
+body.theme-sunset { --bg-desktop:#4a1a3a; --bg-window:rgba(74,26,58,0.92); --accent:#c94a7a; --text-primary:#f8bbd0; }
+body.theme-mono { --bg-desktop:#333; --bg-window:rgba(50,50,50,0.92); --accent:#888; --text-primary:#ccc; }
 
-/* ============================================================
-   АНИМАЦИИ (управляются классами)
-   ============================================================ */
-.anim-off .window,
-.anim-off .toast,
-.anim-off .desktop-icon {
-  transition: none !important;
-}
-.anim-off .toast {
-  animation: none !important;
-}
-.anim-medium .window {
-  transition: opacity 0.2s, transform 0.2s;
-}
-.anim-medium .toast {
-  animation: slideIn 0.3s ease;
-  transition: opacity 0.3s;
-}
-.anim-medium .desktop-icon {
-  transition: background 0.2s, border 0.2s;
-}
-.anim-max .window {
-  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.anim-max .toast {
-  animation: slideIn 0.4s ease;
-  transition: opacity 0.4s;
-}
-.anim-max .desktop-icon {
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.anim-max .desktop-icon.dragging {
-  transition: none;
-}
+/* ===== АНИМАЦИИ ===== */
+.anim-off .window, .anim-off .toast, .anim-off .desktop-icon { transition:none!important; }
+.anim-off .toast { animation:none!important; }
+.anim-medium .window { transition:opacity .2s,transform .2s; }
+.anim-medium .toast { animation:slideIn .3s ease; transition:opacity .3s; }
+.anim-medium .desktop-icon { transition:background .2s,border .2s; }
+.anim-max .window { transition:opacity .4s ease,transform .4s cubic-bezier(.34,1.56,.64,1); }
+.anim-max .toast { animation:slideIn .4s ease; transition:opacity .4s; }
+.anim-max .desktop-icon { transition:all .25s cubic-bezier(.34,1.56,.64,1); }
+.anim-max .desktop-icon.dragging { transition:none; }
+.window { opacity:0; transform:scale(.9); transition:opacity .3s ease,transform .3s ease; }
+.window.active { opacity:1; transform:scale(1); }
+.window.closing { opacity:0; transform:scale(.8); }
 
-/* ===== АНИМАЦИЯ ОКОН ===== */
-.window {
-  opacity: 0;
-  transform: scale(0.9);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-.window.active {
-  opacity: 1;
-  transform: scale(1);
-}
-.window.closing {
-  opacity: 0;
-  transform: scale(0.8);
-}
+/* ===== РАБОЧИЙ СТОЛ ===== */
+#desktop { width:100vw; height:100vh; background:var(--bg-desktop); position:relative; overflow:hidden; }
 
-/* ============================================================
-   РАБОЧИЙ СТОЛ
-   ============================================================ */
-#desktop {
-  width: 100vw;
-  height: 100vh;
-  background: var(--bg-desktop);
-  position: relative;
-  overflow: hidden;
+/* ===== ВИДЖЕТЫ ===== */
+#widgets { position:absolute; top:15px; right:20px; z-index:100; display:flex; flex-direction:column; align-items:flex-end; gap:8px; pointer-events:none; }
+#widgets > * { pointer-events:auto; cursor:grab; }
+.widget-clock, .widget-sysinfo, .widget-weather {
+  background:rgba(0,0,0,0.5); backdrop-filter:blur(6px); padding:8px 14px; border-radius:10px; color:#fff; border:1px solid rgba(255,255,255,0.1); min-width:130px;
 }
+body.light-theme .widget-clock, body.light-theme .widget-sysinfo, body.light-theme .widget-weather {
+  background:rgba(255,255,255,0.7); color:#222; border-color:rgba(0,0,0,0.1);
+}
+.widget-clock .time { font-size:26px; font-weight:300; letter-spacing:1px; }
+.widget-clock .date { font-size:12px; opacity:.8; margin-top:2px; }
+.widget-sysinfo .row { display:flex; justify-content:space-between; font-size:13px; }
+.widget-weather .temp { font-size:20px; font-weight:300; }
+.widget-weather .desc { font-size:12px; opacity:.8; }
+#cpu-chart { width:100%; height:40px; background:rgba(0,0,0,0.2); border-radius:4px; margin-top:4px; }
 
-/* ============================================================
-   ВИДЖЕТЫ
-   ============================================================ */
-#widgets {
-  position: absolute;
-  top: 15px;
-  right: 20px;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  pointer-events: none;
-}
-#widgets > * {
-  pointer-events: auto;
-  cursor: grab;
-}
-.widget-clock,
-.widget-sysinfo,
-.widget-weather {
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(6px);
-  padding: 8px 14px;
-  border-radius: 10px;
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.1);
-  min-width: 130px;
-}
-body.light-theme .widget-clock,
-body.light-theme .widget-sysinfo,
-body.light-theme .widget-weather {
-  background: rgba(255,255,255,0.7);
-  color: #222;
-  border-color: rgba(0,0,0,0.1);
-}
-.widget-clock .time {
-  font-size: 26px;
-  font-weight: 300;
-  letter-spacing: 1px;
-}
-.widget-clock .date {
-  font-size: 12px;
-  opacity: 0.8;
-  margin-top: 2px;
-}
-.widget-sysinfo .row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-}
-.widget-weather .temp {
-  font-size: 20px;
-  font-weight: 300;
-}
-.widget-weather .desc {
-  font-size: 12px;
-  opacity: 0.8;
-}
-#cpu-chart {
-  width: 100%;
-  height: 40px;
-  background: rgba(0,0,0,0.2);
-  border-radius: 4px;
-  margin-top: 4px;
-}
+/* ===== СИСТЕМНЫЙ ТРЕЙ ===== */
+#system-tray { position:absolute; bottom:52px; right:10px; z-index:9998; background:rgba(0,0,0,0.7); backdrop-filter:blur(8px); border-radius:8px; padding:8px 12px; display:none; flex-direction:column; gap:6px; min-width:180px; border:1px solid rgba(255,255,255,0.1); }
+#system-tray .tray-item { display:flex; align-items:center; gap:8px; color:#fff; font-size:13px; }
+#system-tray .tray-item input[type="range"] { flex:1; }
+body.light-theme #system-tray { background:rgba(255,255,255,0.9); color:#222; border-color:rgba(0,0,0,0.1); }
+body.light-theme #system-tray .tray-item { color:#222; }
 
-/* ============================================================
-   СИСТЕМНЫЙ ТРЕЙ
-   ============================================================ */
-#system-tray {
-  position: absolute;
-  bottom: 52px;
-  right: 10px;
-  z-index: 9998;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(8px);
-  border-radius: 8px;
-  padding: 8px 12px;
-  display: none;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 180px;
-  border: 1px solid rgba(255,255,255,0.1);
-}
-#system-tray .tray-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #fff;
-  font-size: 13px;
-}
-#system-tray .tray-item input[type="range"] {
-  flex: 1;
-}
-body.light-theme #system-tray {
-  background: rgba(255,255,255,0.9);
-  color: #222;
-  border-color: rgba(0,0,0,0.1);
-}
-body.light-theme #system-tray .tray-item {
-  color: #222;
-}
+/* ===== ВЫДЕЛЕНИЕ ===== */
+#selection-rect { position:absolute; border:2px solid var(--accent); background:rgba(74,105,189,0.2); pointer-events:none; display:none; z-index:50; }
 
-/* ============================================================
-   ВЫДЕЛЕНИЕ
-   ============================================================ */
-#selection-rect {
-  position: absolute;
-  border: 2px solid var(--accent);
-  background: rgba(74,105,189,0.2);
-  pointer-events: none;
-  display: none;
-  z-index: 50;
-}
+/* ===== ИКОНКИ РАБОЧЕГО СТОЛА ===== */
+.desktop-icon { position:absolute; width:76px; padding:6px 2px; background:rgba(255,255,255,0.08); backdrop-filter:blur(4px); border-radius:8px; text-align:center; color:#fff; font-size:13px; cursor:grab; border:1px solid transparent; display:flex; flex-direction:column; align-items:center; gap:3px; z-index:10; }
+.desktop-icon:hover { background:rgba(255,255,255,0.18); border-color:rgba(255,255,255,0.2); }
+.desktop-icon .icon { width:34px; height:34px; pointer-events:none; }
+.desktop-icon .icon svg { width:100%; height:100%; display:block; }
+.desktop-icon .label { font-size:11px; opacity:.9; text-shadow:0 1px 4px rgba(0,0,0,0.6); word-break:break-word; max-width:70px; pointer-events:none; }
+.desktop-icon.dragging { opacity:.6; z-index:100; }
+.desktop-icon.selected { outline:3px solid var(--accent); outline-offset:2px; background:rgba(74,105,189,0.3); }
+body.light-theme .desktop-icon { color:#222; background:rgba(255,255,255,0.5); }
+body.light-theme .desktop-icon:hover { background:rgba(255,255,255,0.7); }
+body.light-theme .desktop-icon.selected { outline-color:var(--accent); background:rgba(74,105,189,0.2); }
 
-/* ============================================================
-   ИКОНКИ РАБОЧЕГО СТОЛА
-   ============================================================ */
-.desktop-icon {
-  position: absolute;
-  width: 76px;
-  padding: 6px 2px;
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(4px);
-  border-radius: 8px;
-  text-align: center;
-  color: #fff;
-  font-size: 13px;
-  cursor: grab;
-  border: 1px solid transparent;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  z-index: 10;
-}
-.desktop-icon:hover {
-  background: rgba(255,255,255,0.18);
-  border-color: rgba(255,255,255,0.2);
-}
-.desktop-icon .icon {
-  width: 34px;
-  height: 34px;
-  pointer-events: none;
-}
-.desktop-icon .icon svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-.desktop-icon .label {
-  font-size: 11px;
-  opacity: 0.9;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
-  word-break: break-word;
-  max-width: 70px;
-  pointer-events: none;
-}
-.desktop-icon.dragging {
-  opacity: 0.6;
-  z-index: 100;
-}
-.desktop-icon.selected {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
-  background: rgba(74,105,189,0.3);
-}
-body.light-theme .desktop-icon {
-  color: #222;
-  background: rgba(255,255,255,0.5);
-}
-body.light-theme .desktop-icon:hover {
-  background: rgba(255,255,255,0.7);
-}
-body.light-theme .desktop-icon.selected {
-  outline-color: var(--accent);
-  background: rgba(74,105,189,0.2);
-}
+/* ===== ПАНЕЛЬ ЗАДАЧ ===== */
+#taskbar { position:absolute; bottom:0; left:0; right:0; height:48px; background:var(--bg-taskbar); backdrop-filter:blur(10px); display:flex; align-items:center; padding:0 10px; color:#fff; z-index:9999; border-top:1px solid rgba(255,255,255,0.1); }
+#start-btn { background:rgba(255,255,255,0.1); border:none; color:#fff; padding:5px 14px; border-radius:6px; cursor:pointer; font-size:15px; margin-right:10px; transition:background .2s; display:flex; align-items:center; gap:5px; }
+#start-btn:hover { background:rgba(255,255,255,0.25); }
+#start-btn .icon { width:18px; height:18px; }
+#taskbar-clock { margin-left:auto; font-size:14px; opacity:.9; padding:0 6px; cursor:default; position:relative; }
+#taskbar-clock:hover::after { content:attr(data-date); position:absolute; bottom:100%; right:0; background:rgba(0,0,0,0.8); color:#fff; padding:4px 10px; border-radius:4px; font-size:12px; white-space:nowrap; }
+#taskbar-windows { display:flex; gap:5px; flex:1; overflow-x:auto; padding:0 6px; }
+.taskbar-item { background:rgba(255,255,255,0.1); padding:3px 12px; border-radius:4px; font-size:12px; cursor:pointer; white-space:nowrap; transition:background .2s; display:flex; align-items:center; gap:4px; }
+.taskbar-item .icon { width:14px; height:14px; }
+.taskbar-item.active { background:rgba(255,255,255,0.3); }
+.taskbar-item:hover { background:rgba(255,255,255,0.2); }
+#collapse-all-btn { background:rgba(255,255,255,0.1); border:none; color:#aaa; padding:3px 8px; border-radius:4px; margin-right:6px; font-size:13px; transition:background .2s; display:flex; align-items:center; }
+#collapse-all-btn:hover { background:rgba(255,255,255,0.2); color:#fff; }
+#collapse-all-btn .icon { width:16px; height:16px; }
+#tray-btn { background:rgba(255,255,255,0.1); border:none; color:#aaa; padding:3px 8px; border-radius:4px; margin-right:6px; font-size:16px; transition:background .2s; }
+#tray-btn:hover { background:rgba(255,255,255,0.2); color:#fff; }
+body.light-theme #taskbar { background:var(--bg-taskbar); border-top-color:rgba(0,0,0,0.1); }
+body.light-theme #taskbar, body.light-theme #taskbar-clock, body.light-theme #start-btn, body.light-theme #collapse-all-btn, body.light-theme #tray-btn { color:#222; }
+body.light-theme #start-btn { background:rgba(0,0,0,0.05); }
+body.light-theme #start-btn:hover { background:rgba(0,0,0,0.15); }
+body.light-theme .taskbar-item { background:rgba(0,0,0,0.05); color:#222; }
+body.light-theme .taskbar-item.active { background:rgba(0,0,0,0.15); }
 
-/* ============================================================
-   ПАНЕЛЬ ЗАДАЧ
-   ============================================================ */
-#taskbar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 48px;
-  background: var(--bg-taskbar);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  color: #fff;
-  z-index: 9999;
-  border-top: 1px solid rgba(255,255,255,0.1);
-}
-#start-btn {
-  background: rgba(255,255,255,0.1);
-  border: none;
-  color: #fff;
-  padding: 5px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 15px;
-  margin-right: 10px;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-#start-btn:hover {
-  background: rgba(255,255,255,0.25);
-}
-#start-btn .icon {
-  width: 18px;
-  height: 18px;
-}
-#taskbar-clock {
-  margin-left: auto;
-  font-size: 14px;
-  opacity: 0.9;
-  padding: 0 6px;
-  cursor: default;
-  position: relative;
-}
-#taskbar-clock:hover::after {
-  content: attr(data-date);
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  background: rgba(0,0,0,0.8);
-  color: #fff;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  white-space: nowrap;
-}
-#taskbar-windows {
-  display: flex;
-  gap: 5px;
-  flex: 1;
-  overflow-x: auto;
-  padding: 0 6px;
-}
-.taskbar-item {
-  background: rgba(255,255,255,0.1);
-  padding: 3px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.taskbar-item .icon {
-  width: 14px;
-  height: 14px;
-}
-.taskbar-item.active {
-  background: rgba(255,255,255,0.3);
-}
-.taskbar-item:hover {
-  background: rgba(255,255,255,0.2);
-}
-#collapse-all-btn {
-  background: rgba(255,255,255,0.1);
-  border: none;
-  color: #aaa;
-  padding: 3px 8px;
-  border-radius: 4px;
-  margin-right: 6px;
-  font-size: 13px;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
-}
-#collapse-all-btn:hover {
-  background: rgba(255,255,255,0.2);
-  color: #fff;
-}
-#collapse-all-btn .icon {
-  width: 16px;
-  height: 16px;
-}
-#tray-btn {
-  background: rgba(255,255,255,0.1);
-  border: none;
-  color: #aaa;
-  padding: 3px 8px;
-  border-radius: 4px;
-  margin-right: 6px;
-  font-size: 16px;
-  transition: background 0.2s;
-}
-#tray-btn:hover {
-  background: rgba(255,255,255,0.2);
-  color: #fff;
-}
-body.light-theme #taskbar {
-  background: var(--bg-taskbar);
-  border-top-color: rgba(0,0,0,0.1);
-}
-body.light-theme #taskbar,
-body.light-theme #taskbar-clock,
-body.light-theme #start-btn,
-body.light-theme #collapse-all-btn,
-body.light-theme #tray-btn {
-  color: #222;
-}
-body.light-theme #start-btn {
-  background: rgba(0,0,0,0.05);
-}
-body.light-theme #start-btn:hover {
-  background: rgba(0,0,0,0.15);
-}
-body.light-theme .taskbar-item {
-  background: rgba(0,0,0,0.05);
-  color: #222;
-}
-body.light-theme .taskbar-item.active {
-  background: rgba(0,0,0,0.15);
-}
+/* ===== ОКНА ===== */
+.window { position:absolute; min-width:300px; min-height:180px; background:var(--bg-window); backdrop-filter:blur(12px); border-radius:12px; box-shadow:var(--shadow); border:1px solid var(--border-light); display:flex; flex-direction:column; overflow:hidden; resize:both; }
+.window.hidden { display:none; }
+.window-header { display:flex; align-items:center; padding:6px 10px; background:rgba(255,255,255,0.05); cursor:grab; flex-shrink:0; }
+.window-header:active { cursor:grabbing; }
+.window-title { flex:1; color:var(--text-primary); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:flex; align-items:center; gap:6px; }
+.window-title .icon { width:18px; height:18px; flex-shrink:0; }
+.window-controls { display:flex; gap:6px; }
+.window-controls button { background:none; border:none; color:#aaa; font-size:15px; cursor:pointer; padding:0 3px; transition:color .2s; }
+.window-controls button:hover { color:#fff; }
+.window-controls .close-btn:hover { color:#ff5e5e; }
+.window-controls .pin-btn.pinned { color:#f1c40f; }
+.window-content { flex:1; padding:14px; color:var(--text-primary); overflow:auto; font-size:14px; background:rgba(0,0,0,0.2); }
+.window.active { z-index:2000; }
+body.light-theme .window { background:rgba(255,255,255,0.95); border-color:rgba(0,0,0,0.1); }
+body.light-theme .window-title { color:#222; }
+body.light-theme .window-content { color:#333; background:rgba(0,0,0,0.02); }
+body.light-theme .window-header { background:rgba(0,0,0,0.04); }
+body.light-theme .window-controls button { color:#555; }
+body.light-theme .window-controls button:hover { color:#000; }
+.window.pinned { z-index:9999!important; }
 
-/* ============================================================
-   ОКНА
-   ============================================================ */
-.window {
-  position: absolute;
-  min-width: 300px;
-  min-height: 180px;
-  background: var(--bg-window);
-  backdrop-filter: blur(12px);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border-light);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  resize: both;
-}
-.window.hidden {
-  display: none;
-}
-.window-header {
-  display: flex;
-  align-items: center;
-  padding: 6px 10px;
-  background: rgba(255,255,255,0.05);
-  cursor: grab;
-  flex-shrink: 0;
-}
-.window-header:active {
-  cursor: grabbing;
-}
-.window-title {
-  flex: 1;
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.window-title .icon {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-.window-controls {
-  display: flex;
-  gap: 6px;
-}
-.window-controls button {
-  background: none;
-  border: none;
-  color: #aaa;
-  font-size: 15px;
-  cursor: pointer;
-  padding: 0 3px;
-  transition: color 0.2s;
-}
-.window-controls button:hover {
-  color: #fff;
-}
-.window-controls .close-btn:hover {
-  color: #ff5e5e;
-}
-.window-controls .pin-btn.pinned {
-  color: #f1c40f;
-}
-.window-content {
-  flex: 1;
-  padding: 14px;
-  color: var(--text-primary);
-  overflow: auto;
-  font-size: 14px;
-  background: rgba(0,0,0,0.2);
-}
-.window.active {
-  z-index: 2000;
-}
-body.light-theme .window {
-  background: rgba(255,255,255,0.95);
-  border-color: rgba(0,0,0,0.1);
-}
-body.light-theme .window-title {
-  color: #222;
-}
-body.light-theme .window-content {
-  color: #333;
-  background: rgba(0,0,0,0.02);
-}
-body.light-theme .window-header {
-  background: rgba(0,0,0,0.04);
-}
-body.light-theme .window-controls button {
-  color: #555;
-}
-body.light-theme .window-controls button:hover {
-  color: #000;
-}
-.window.pinned {
-  z-index: 9999 !important;
-}
+/* ===== УВЕДОМЛЕНИЯ ===== */
+#notifications { position:fixed; bottom:70px; right:20px; z-index:99999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+.toast { background:rgba(20,20,30,0.92); backdrop-filter:blur(8px); color:#fff; padding:10px 18px; border-radius:8px; border-left:4px solid #50fa7b; box-shadow:0 4px 20px rgba(0,0,0,0.5); font-size:13px; max-width:300px; animation:slideIn .3s ease; transition:opacity .3s; pointer-events:auto; }
+.toast.error { border-left-color:#ff5555; }
+.toast.warning { border-left-color:#f1fa8c; }
+@keyframes slideIn { from { transform:translateX(100px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+body.light-theme .toast { background:rgba(255,255,255,0.92); color:#222; }
 
-/* ============================================================
-   УВЕДОМЛЕНИЯ
-   ============================================================ */
-#notifications {
-  position: fixed;
-  bottom: 70px;
-  right: 20px;
-  z-index: 99999;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  pointer-events: none;
-}
-.toast {
-  background: rgba(20,20,30,0.92);
-  backdrop-filter: blur(8px);
-  color: #fff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  border-left: 4px solid #50fa7b;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  font-size: 13px;
-  max-width: 300px;
-  animation: slideIn 0.3s ease;
-  transition: opacity 0.3s;
-  pointer-events: auto;
-}
-.toast.error {
-  border-left-color: #ff5555;
-}
-.toast.warning {
-  border-left-color: #f1fa8c;
-}
-@keyframes slideIn {
-  from { transform: translateX(100px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-body.light-theme .toast {
-  background: rgba(255,255,255,0.92);
-  color: #222;
-}
+/* ===== КОНТЕКСТНОЕ МЕНЮ ===== */
+#context-menu { position:fixed; background:rgba(30,30,46,0.95); backdrop-filter:blur(8px); border-radius:8px; padding:5px 0; min-width:170px; box-shadow:0 10px 40px rgba(0,0,0,0.7); border:1px solid rgba(255,255,255,0.08); z-index:99999; display:none; }
+#context-menu .menu-item { padding:7px 18px; color:#ddd; font-size:13px; cursor:pointer; transition:background .15s; }
+#context-menu .menu-item:hover { background:rgba(255,255,255,0.08); }
+#context-menu .menu-item.danger { color:#ff5e5e; }
+#context-menu .menu-item.danger:hover { background:rgba(255,0,0,0.15); }
+#context-menu .menu-divider { height:1px; background:rgba(255,255,255,0.05); margin:3px 10px; }
+body.light-theme #context-menu { background:rgba(255,255,255,0.95); border-color:rgba(0,0,0,0.1); }
+body.light-theme #context-menu .menu-item { color:#222; }
+body.light-theme #context-menu .menu-item:hover { background:rgba(0,0,0,0.05); }
+body.light-theme #context-menu .menu-item.danger { color:#d63031; }
+body.light-theme #context-menu .menu-divider { background:rgba(0,0,0,0.08); }
 
-/* ============================================================
-   КОНТЕКСТНОЕ МЕНЮ
-   ============================================================ */
-#context-menu {
-  position: fixed;
-  background: rgba(30,30,46,0.95);
-  backdrop-filter: blur(8px);
-  border-radius: 8px;
-  padding: 5px 0;
-  min-width: 170px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.7);
-  border: 1px solid rgba(255,255,255,0.08);
-  z-index: 99999;
-  display: none;
-}
-#context-menu .menu-item {
-  padding: 7px 18px;
-  color: #ddd;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-#context-menu .menu-item:hover {
-  background: rgba(255,255,255,0.08);
-}
-#context-menu .menu-item.danger {
-  color: #ff5e5e;
-}
-#context-menu .menu-item.danger:hover {
-  background: rgba(255,0,0,0.15);
-}
-#context-menu .menu-divider {
-  height: 1px;
-  background: rgba(255,255,255,0.05);
-  margin: 3px 10px;
-}
-body.light-theme #context-menu {
-  background: rgba(255,255,255,0.95);
-  border-color: rgba(0,0,0,0.1);
-}
-body.light-theme #context-menu .menu-item {
-  color: #222;
-}
-body.light-theme #context-menu .menu-item:hover {
-  background: rgba(0,0,0,0.05);
-}
-body.light-theme #context-menu .menu-item.danger {
-  color: #d63031;
-}
-body.light-theme #context-menu .menu-divider {
-  background: rgba(0,0,0,0.08);
-}
+/* ===== ДИАЛОГ ===== */
+#dialog-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:99999; display:none; justify-content:center; align-items:center; }
+#dialog-box { background:var(--bg-window); padding:24px; border-radius:12px; min-width:300px; max-width:400px; box-shadow:var(--shadow); border:1px solid var(--border-light); color:var(--text-primary); }
+#dialog-box h3 { margin-bottom:12px; font-weight:400; }
+#dialog-box input { width:100%; padding:8px 12px; background:var(--bg-input); border:1px solid var(--border-light); border-radius:4px; color:var(--text-primary); font-size:14px; outline:none; }
+#dialog-box input:focus { border-color:var(--accent); }
+#dialog-box .dialog-buttons { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
+#dialog-box .dialog-buttons button { padding:6px 20px; border-radius:4px; font-size:13px; transition:background .2s; }
+#dialog-box .dialog-buttons .btn-cancel { background:rgba(255,255,255,0.1); color:#aaa; }
+#dialog-box .dialog-buttons .btn-cancel:hover { background:rgba(255,255,255,0.2); }
+#dialog-box .dialog-buttons .btn-confirm { background:var(--accent); color:#fff; }
+#dialog-box .dialog-buttons .btn-confirm:hover { background:var(--accent-hover); }
+body.light-theme #dialog-box { background:rgba(255,255,255,0.95); color:#222; border-color:rgba(0,0,0,0.1); }
+body.light-theme #dialog-box input { background:rgba(0,0,0,0.05); border-color:rgba(0,0,0,0.1); color:#222; }
+body.light-theme #dialog-box .dialog-buttons .btn-cancel { background:rgba(0,0,0,0.05); color:#555; }
+body.light-theme #dialog-box .dialog-buttons .btn-cancel:hover { background:rgba(0,0,0,0.1); }
 
-/* ============================================================
-   ДИАЛОГ
-   ============================================================ */
-#dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(4px);
-  z-index: 99999;
-  display: none;
-  justify-content: center;
-  align-items: center;
-}
-#dialog-box {
-  background: var(--bg-window);
-  padding: 24px;
-  border-radius: 12px;
-  min-width: 300px;
-  max-width: 400px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border-light);
-  color: var(--text-primary);
-}
-#dialog-box h3 {
-  margin-bottom: 12px;
-  font-weight: 400;
-}
-#dialog-box input {
-  width: 100%;
-  padding: 8px 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  color: var(--text-primary);
-  font-size: 14px;
-  outline: none;
-}
-#dialog-box input:focus {
-  border-color: var(--accent);
-}
-#dialog-box .dialog-buttons {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 16px;
-}
-#dialog-box .dialog-buttons button {
-  padding: 6px 20px;
-  border-radius: 4px;
-  font-size: 13px;
-  transition: background 0.2s;
-}
-#dialog-box .dialog-buttons .btn-cancel {
-  background: rgba(255,255,255,0.1);
-  color: #aaa;
-}
-#dialog-box .dialog-buttons .btn-cancel:hover {
-  background: rgba(255,255,255,0.2);
-}
-#dialog-box .dialog-buttons .btn-confirm {
-  background: var(--accent);
-  color: #fff;
-}
-#dialog-box .dialog-buttons .btn-confirm:hover {
-  background: var(--accent-hover);
-}
-body.light-theme #dialog-box {
-  background: rgba(255,255,255,0.95);
-  color: #222;
-  border-color: rgba(0,0,0,0.1);
-}
-body.light-theme #dialog-box input {
-  background: rgba(0,0,0,0.05);
-  border-color: rgba(0,0,0,0.1);
-  color: #222;
-}
-body.light-theme #dialog-box .dialog-buttons .btn-cancel {
-  background: rgba(0,0,0,0.05);
-  color: #555;
-}
-body.light-theme #dialog-box .dialog-buttons .btn-cancel:hover {
-  background: rgba(0,0,0,0.1);
-}
+/* ===== ГЛОБАЛЬНЫЙ ПОИСК ===== */
+#search-window .search-input { width:100%; padding:10px 16px; background:var(--bg-input); border:1px solid var(--border-light); border-radius:8px; color:var(--text-primary); font-size:16px; outline:none; }
+#search-results { max-height:300px; overflow-y:auto; margin-top:10px; }
+.search-result { padding:6px 12px; border-radius:4px; cursor:pointer; display:flex; align-items:center; gap:10px; transition:background .15s; }
+.search-result:hover { background:var(--bg-hover); }
+.search-result .result-icon { width:24px; height:24px; }
+.search-result .result-name { flex:1; }
+.search-result .result-path { font-size:11px; opacity:.6; }
 
-/* ============================================================
-   ГЛОБАЛЬНЫЙ ПОИСК
-   ============================================================ */
-#search-window .search-input {
-  width: 100%;
-  padding: 10px 16px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-size: 16px;
-  outline: none;
-}
-#search-results {
-  max-height: 300px;
-  overflow-y: auto;
-  margin-top: 10px;
-}
-.search-result {
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: background 0.15s;
-}
-.search-result:hover {
-  background: var(--bg-hover);
-}
-.search-result .result-icon {
-  width: 24px;
-  height: 24px;
-}
-.search-result .result-name {
-  flex: 1;
-}
-.search-result .result-path {
-  font-size: 11px;
-  opacity: 0.6;
-}
+/* ===== БРАУЗЕР ===== */
+.browser-toolbar { display:flex; gap:6px; padding:6px; background:rgba(255,255,255,0.05); align-items:center; }
+.browser-toolbar input { flex:1; padding:4px 10px; background:var(--bg-input); border:1px solid var(--border-light); border-radius:4px; color:var(--text-primary); outline:none; }
+.browser-toolbar button { padding:4px 10px; background:rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); transition:background .2s; }
+.browser-toolbar button:hover { background:rgba(255,255,255,0.2); }
+.browser-frame { width:100%; height:calc(100% - 40px); border:none; background:#fff; }
 
-/* ============================================================
-   БРАУЗЕР
-   ============================================================ */
-.browser-toolbar {
-  display: flex;
-  gap: 6px;
-  padding: 6px;
-  background: rgba(255,255,255,0.05);
-  align-items: center;
-}
-.browser-toolbar input {
-  flex: 1;
-  padding: 4px 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  color: var(--text-primary);
-  outline: none;
-}
-.browser-toolbar button {
-  padding: 4px 10px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 4px;
-  color: var(--text-primary);
-  transition: background 0.2s;
-}
-.browser-toolbar button:hover {
-  background: rgba(255,255,255,0.2);
-}
-.browser-frame {
-  width: 100%;
-  height: calc(100% - 40px);
-  border: none;
-  background: #fff;
-}
+/* ===== КАЛЕНДАРЬ ===== */
+.calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center; }
+.calendar-grid .day-header { font-weight:600; color:var(--text-secondary); }
+.calendar-grid .day-cell { padding:8px 4px; border-radius:4px; cursor:pointer; transition:background .15s; }
+.calendar-grid .day-cell:hover { background:var(--bg-hover); }
+.calendar-grid .day-cell.has-event { background:var(--accent); color:#fff; }
+.calendar-grid .day-cell.other-month { opacity:.3; }
+.calendar-nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.calendar-nav button { padding:4px 12px; background:rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); }
+.calendar-nav button:hover { background:rgba(255,255,255,0.2); }
+.calendar-events-list { margin-top:12px; max-height:150px; overflow-y:auto; }
+.calendar-event-item { padding:4px 8px; border-left:3px solid var(--accent); margin-bottom:4px; font-size:13px; display:flex; justify-content:space-between; }
+.calendar-event-item .event-time { opacity:.7; font-size:12px; }
+.calendar-event-item .event-del { cursor:pointer; color:#ff5e5e; }
 
-/* ============================================================
-   КАЛЕНДАРЬ
-   ============================================================ */
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  text-align: center;
-}
-.calendar-grid .day-header {
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-.calendar-grid .day-cell {
-  padding: 8px 4px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.calendar-grid .day-cell:hover {
-  background: var(--bg-hover);
-}
-.calendar-grid .day-cell.has-event {
-  background: var(--accent);
-  color: #fff;
-}
-.calendar-grid .day-cell.other-month {
-  opacity: 0.3;
-}
-.calendar-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.calendar-nav button {
-  padding: 4px 12px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 4px;
-  color: var(--text-primary);
-}
-.calendar-nav button:hover {
-  background: rgba(255,255,255,0.2);
-}
-.calendar-events-list {
-  margin-top: 12px;
-  max-height: 150px;
-  overflow-y: auto;
-}
-.calendar-event-item {
-  padding: 4px 8px;
-  border-left: 3px solid var(--accent);
-  margin-bottom: 4px;
-  font-size: 13px;
-  display: flex;
-  justify-content: space-between;
-}
-.calendar-event-item .event-time {
-  opacity: 0.7;
-  font-size: 12px;
-}
-.calendar-event-item .event-del {
-  cursor: pointer;
-  color: #ff5e5e;
-}
+/* ===== БУДИЛЬНИК ===== */
+.alarm-item { display:flex; align-items:center; gap:12px; padding:6px 10px; background:rgba(255,255,255,0.04); border-radius:4px; margin-bottom:4px; }
+.alarm-item .alarm-time { font-size:18px; font-weight:500; color:var(--text-primary); }
+.alarm-item .alarm-toggle { cursor:pointer; padding:2px 10px; border-radius:4px; background:var(--accent); color:#fff; }
+.alarm-item .alarm-toggle.off { background:#888; }
+.alarm-item .alarm-del { cursor:pointer; color:#ff5e5e; }
 
-/* ============================================================
-   БУДИЛЬНИК
-   ============================================================ */
-.alarm-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 10px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 4px;
-  margin-bottom: 4px;
-}
-.alarm-item .alarm-time {
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-.alarm-item .alarm-toggle {
-  cursor: pointer;
-  padding: 2px 10px;
-  border-radius: 4px;
-  background: var(--accent);
-  color: #fff;
-}
-.alarm-item .alarm-toggle.off {
-  background: #888;
-}
-.alarm-item .alarm-del {
-  cursor: pointer;
-  color: #ff5e5e;
-}
+/* ===== БЛОКНОТ ===== */
+.notepad-tabs { display:flex; gap:4px; padding:4px; background:rgba(255,255,255,0.05); overflow-x:auto; }
+.notepad-tabs .tab { padding:4px 12px; background:rgba(255,255,255,0.1); border-radius:4px 4px 0 0; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:6px; color:var(--text-primary); }
+.notepad-tabs .tab.active { background:rgba(255,255,255,0.2); }
+.notepad-tabs .tab .tab-close { cursor:pointer; color:#ff5e5e; }
+.notepad-editor { width:100%; height:calc(100% - 36px); background:#111; color:#eee; border:none; padding:10px; font-family:'Courier New',monospace; font-size:14px; resize:none; outline:none; }
+body.light-theme .notepad-editor { background:#fafafa; color:#222; }
 
-/* ============================================================
-   БЛОКНОТ
-   ============================================================ */
-.notepad-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: rgba(255,255,255,0.05);
-  overflow-x: auto;
-}
-.notepad-tabs .tab {
-  padding: 4px 12px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 4px 4px 0 0;
-  cursor: pointer;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-primary);
-}
-.notepad-tabs .tab.active {
-  background: rgba(255,255,255,0.2);
-}
-.notepad-tabs .tab .tab-close {
-  cursor: pointer;
-  color: #ff5e5e;
-}
-.notepad-editor {
-  width: 100%;
-  height: calc(100% - 36px);
-  background: #111;
-  color: #eee;
-  border: none;
-  padding: 10px;
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
-  resize: none;
-  outline: none;
-}
-body.light-theme .notepad-editor {
-  background: #fafafa;
-  color: #222;
-}
+/* ===== НАУЧНЫЙ КАЛЬКУЛЯТОР ===== */
+.calc-mode-switch { display:flex; gap:8px; justify-content:center; margin-bottom:8px; }
+.calc-mode-switch button { padding:4px 16px; border-radius:4px; background:rgba(255,255,255,0.1); color:var(--text-primary); }
+.calc-mode-switch button.active { background:var(--accent); color:#fff; }
+.calc-grid-scientific { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; max-width:300px; margin:0 auto; }
+.calc-grid-scientific .calc-btn { font-size:14px; padding:6px; }
+.calc-display { grid-column:span 4; background:rgba(0,0,0,0.4); padding:10px 14px; border-radius:6px; text-align:right; font-size:26px; color:#fff; font-family:'Courier New',monospace; min-height:55px; word-break:break-all; }
+.calc-btn { background:rgba(255,255,255,0.1); border:none; color:#fff; font-size:18px; padding:10px; border-radius:6px; transition:background .15s; }
+.calc-btn:hover { background:rgba(255,255,255,0.2); }
+.calc-btn.op { background:rgba(255,165,0,0.3); }
+.calc-btn.op:hover { background:rgba(255,165,0,0.5); }
+.calc-btn.equal { background:var(--accent); }
+.calc-btn.equal:hover { background:var(--accent-hover); }
+.calc-history { margin-top:10px; color:#888; font-size:12px; max-height:70px; overflow-y:auto; border-top:1px solid rgba(255,255,255,0.05); padding-top:6px; }
+.calc-history div { padding:2px 0; }
+body.light-theme .calc-display { background:rgba(0,0,0,0.08); color:#222; }
+body.light-theme .calc-btn { background:rgba(0,0,0,0.05); color:#222; }
+body.light-theme .calc-btn:hover { background:rgba(0,0,0,0.12); }
+.calc-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; max-width:260px; margin:0 auto; }
 
-/* ============================================================
-   НАУЧНЫЙ КАЛЬКУЛЯТОР
-   ============================================================ */
-.calc-mode-switch {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin-bottom: 8px;
-}
-.calc-mode-switch button {
-  padding: 4px 16px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.1);
-  color: var(--text-primary);
-}
-.calc-mode-switch button.active {
-  background: var(--accent);
-  color: #fff;
-}
-.calc-grid-scientific {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
-  max-width: 300px;
-  margin: 0 auto;
-}
-.calc-grid-scientific .calc-btn {
-  font-size: 14px;
-  padding: 6px;
-}
+/* ===== PIGMO PRO ===== */
+.pigmo-toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; align-items:center; }
+.pigmo-toolbar button { background:rgba(255,255,255,0.1); border:none; color:var(--text-primary); padding:4px 12px; border-radius:4px; font-size:12px; transition:background .2s; display:flex; align-items:center; gap:4px; }
+.pigmo-toolbar button:hover { background:rgba(255,255,255,0.2); }
+.pigmo-toolbar input[type="color"] { width:30px; height:30px; border:none; border-radius:4px; cursor:pointer; background:none; }
+.pigmo-toolbar input[type="range"] { width:80px; }
+#pigmo-canvas { display:block; margin:0 auto; background:#fff; border-radius:6px; cursor:crosshair; }
+body.light-theme .pigmo-toolbar button { background:rgba(0,0,0,0.05); color:#222; }
+body.light-theme .pigmo-toolbar button:hover { background:rgba(0,0,0,0.12); }
 
-/* ============================================================
-   PIGMO PRO
-   ============================================================ */
-.pigmo-toolbar {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-  align-items: center;
-}
-.pigmo-toolbar button {
-  background: rgba(255,255,255,0.1);
-  border: none;
-  color: var(--text-primary);
-  padding: 4px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.pigmo-toolbar button:hover {
-  background: rgba(255,255,255,0.2);
-}
-.pigmo-toolbar input[type="color"] {
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background: none;
-}
-.pigmo-toolbar input[type="range"] {
-  width: 80px;
-}
-#pigmo-canvas {
-  display: block;
-  margin: 0 auto;
-  background: #fff;
-  border-radius: 6px;
-  cursor: crosshair;
-}
-body.light-theme .pigmo-toolbar button {
-  background: rgba(0,0,0,0.05);
-  color: #222;
-}
-body.light-theme .pigmo-toolbar button:hover {
-  background: rgba(0,0,0,0.12);
-}
+/* ===== ПАРОЛИ ===== */
+.password-item { display:flex; align-items:center; gap:10px; padding:6px 10px; background:rgba(255,255,255,0.04); border-radius:4px; margin-bottom:4px; }
+.password-item .pass-site { flex:1; font-weight:500; color:var(--text-primary); }
+.password-item .pass-login { color:var(--text-secondary); font-size:13px; }
+.password-item .pass-actions button { padding:2px 8px; border-radius:4px; font-size:12px; }
+.password-item .pass-actions .copy-btn { background:var(--accent); color:#fff; }
+.password-item .pass-actions .del-btn { background:rgba(255,0,0,0.2); color:#ff5e5e; }
 
-/* ============================================================
-   ПАРОЛИ
-   ============================================================ */
-.password-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 4px;
-  margin-bottom: 4px;
-}
-.password-item .pass-site {
-  flex: 1;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-.password-item .pass-login {
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-.password-item .pass-actions button {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-}
-.password-item .pass-actions .copy-btn {
-  background: var(--accent);
-  color: #fff;
-}
-.password-item .pass-actions .del-btn {
-  background: rgba(255,0,0,0.2);
-  color: #ff5e5e;
-}
+/* ===== ПРЕЗЕНТАЦИЯ ===== */
+.slide-container { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.slide-container .slide-image { max-width:100%; max-height:80%; object-fit:contain; }
+.slide-container .slide-controls { display:flex; gap:10px; margin-top:10px; }
+.slide-container .slide-controls button { padding:6px 16px; background:var(--accent); color:#fff; border-radius:4px; transition:background .2s; }
+.slide-container .slide-controls button:hover { background:var(--accent-hover); }
 
-/* ============================================================
-   ПРЕЗЕНТАЦИЯ
-   ============================================================ */
-.slide-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.slide-container .slide-image {
-  max-width: 100%;
-  max-height: 80%;
-  object-fit: contain;
-}
-.slide-container .slide-controls {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-.slide-container .slide-controls button {
-  padding: 6px 16px;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-.slide-container .slide-controls button:hover {
-  background: var(--accent-hover);
-}
+/* ===== ФАЙЛОВЫЙ МЕНЕДЖЕР ===== */
+.fm-toolbar { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+.fm-toolbar button { background:rgba(255,255,255,0.1); border:none; color:var(--text-primary); padding:3px 10px; border-radius:4px; font-size:12px; transition:background .2s; display:flex; align-items:center; gap:3px; }
+.fm-toolbar button .icon { width:14px; height:14px; }
+.fm-toolbar button:hover { background:rgba(255,255,255,0.2); }
+.fm-path { color:var(--text-secondary); font-size:12px; padding:3px 0; border-bottom:1px solid var(--border-light); margin-bottom:6px; }
+.fm-list { display:flex; flex-direction:column; gap:2px; }
+.fm-item { display:flex; align-items:center; padding:5px 8px; border-radius:4px; cursor:pointer; transition:background .15s; gap:8px; }
+.fm-item:hover { background:var(--bg-hover); }
+.fm-item .fm-icon { width:22px; height:22px; flex-shrink:0; }
+.fm-item .fm-icon svg { width:100%; height:100%; }
+.fm-item .fm-name { flex:1; color:var(--text-primary); font-size:13px; }
+.fm-item .fm-actions button { background:none; border:none; color:#888; cursor:pointer; font-size:14px; padding:0 3px; }
+.fm-item .fm-actions button:hover { color:#ff5e5e; }
+.fm-bookmarks { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px; }
+.fm-bookmarks .bookmark { padding:2px 10px; background:rgba(255,255,255,0.1); border-radius:12px; cursor:pointer; font-size:11px; color:var(--text-primary); }
+.fm-bookmarks .bookmark:hover { background:rgba(255,255,255,0.2); }
+body.light-theme .fm-toolbar button { background:rgba(0,0,0,0.05); color:#222; }
+body.light-theme .fm-toolbar button:hover { background:rgba(0,0,0,0.12); }
+body.light-theme .fm-item .fm-name { color:#222; }
+body.light-theme .fm-path { color:#555; }
 
-/* ============================================================
-   ФАЙЛОВЫЙ МЕНЕДЖЕР
-   ============================================================ */
-.fm-toolbar {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-.fm-toolbar button {
-  background: rgba(255,255,255,0.1);
-  border: none;
-  color: var(--text-primary);
-  padding: 3px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-.fm-toolbar button .icon {
-  width: 14px;
-  height: 14px;
-}
-.fm-toolbar button:hover {
-  background: rgba(255,255,255,0.2);
-}
-.fm-path {
-  color: var(--text-secondary);
-  font-size: 12px;
-  padding: 3px 0;
-  border-bottom: 1px solid var(--border-light);
-  margin-bottom: 6px;
-}
-.fm-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.fm-item {
-  display: flex;
-  align-items: center;
-  padding: 5px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.15s;
-  gap: 8px;
-}
-.fm-item:hover {
-  background: var(--bg-hover);
-}
-.fm-item .fm-icon {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-}
-.fm-item .fm-icon svg {
-  width: 100%;
-  height: 100%;
-}
-.fm-item .fm-name {
-  flex: 1;
-  color: var(--text-primary);
-  font-size: 13px;
-}
-.fm-item .fm-actions button {
-  background: none;
-  border: none;
-  color: #888;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 0 3px;
-}
-.fm-item .fm-actions button:hover {
-  color: #ff5e5e;
-}
-.fm-bookmarks {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  margin-bottom: 6px;
-}
-.fm-bookmarks .bookmark {
-  padding: 2px 10px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 11px;
-  color: var(--text-primary);
-}
-.fm-bookmarks .bookmark:hover {
-  background: rgba(255,255,255,0.2);
-}
-body.light-theme .fm-toolbar button {
-  background: rgba(0,0,0,0.05);
-  color: #222;
-}
-body.light-theme .fm-toolbar button:hover {
-  background: rgba(0,0,0,0.12);
-}
-body.light-theme .fm-item .fm-name {
-  color: #222;
-}
-body.light-theme .fm-path {
-  color: #555;
-}
+/* ===== ТЕРМИНАЛ ===== */
+#terminal-output { background:#0a0a0a; color:#8be9fd; padding:8px; height:200px; overflow-y:auto; font-family:'Courier New',monospace; font-size:13px; white-space:pre-wrap; line-height:1.4; }
+.terminal-input-line { display:flex; background:#1a1a1a; padding:3px; align-items:center; }
+.terminal-input-line span { color:#50fa7b; padding:0 6px; font-family:monospace; font-weight:700; }
+.terminal-input-line input { flex:1; background:transparent; border:none; color:#fff; outline:none; font-family:'Courier New',monospace; font-size:13px; }
+body.light-theme #terminal-output { background:#f5f5f5; color:#222; }
+body.light-theme .terminal-input-line { background:#e8e8e8; }
+body.light-theme .terminal-input-line input { color:#222; }
 
-/* ============================================================
-   ТЕРМИНАЛ
-   ============================================================ */
-#terminal-output {
-  background: #0a0a0a;
-  color: #8be9fd;
-  padding: 8px;
-  height: 200px;
-  overflow-y: auto;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  white-space: pre-wrap;
-  line-height: 1.4;
-}
-.terminal-input-line {
-  display: flex;
-  background: #1a1a1a;
-  padding: 3px;
-  align-items: center;
-}
-.terminal-input-line span {
-  color: #50fa7b;
-  padding: 0 6px;
-  font-family: monospace;
-  font-weight: 700;
-}
-.terminal-input-line input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: #fff;
-  outline: none;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-}
-body.light-theme #terminal-output {
-  background: #f5f5f5;
-  color: #222;
-}
-body.light-theme .terminal-input-line {
-  background: #e8e8e8;
-}
-body.light-theme .terminal-input-line input {
-  color: #222;
-}
+/* ===== ПРОЦЕССЫ ===== */
+.process-list { display:flex; flex-direction:column; gap:5px; }
+.process-item { display:flex; align-items:center; padding:5px 10px; background:rgba(255,255,255,0.04); border-radius:4px; gap:10px; }
+.process-item .proc-name { flex:1; color:var(--text-primary); font-size:13px; }
+.process-item .proc-id { color:#888; font-size:11px; }
+.process-item button { background:rgba(255,0,0,0.2); border:none; color:#ff5e5e; padding:2px 10px; border-radius:4px; font-size:12px; transition:background .2s; }
+.process-item button:hover { background:rgba(255,0,0,0.4); }
+body.light-theme .process-item { background:rgba(0,0,0,0.04); }
+body.light-theme .process-item .proc-name { color:#222; }
 
-/* ============================================================
-   ПРОЦЕССЫ
-   ============================================================ */
-.process-list {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.process-item {
-  display: flex;
-  align-items: center;
-  padding: 5px 10px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 4px;
-  gap: 10px;
-}
-.process-item .proc-name {
-  flex: 1;
-  color: var(--text-primary);
-  font-size: 13px;
-}
-.process-item .proc-id {
-  color: #888;
-  font-size: 11px;
-}
-.process-item button {
-  background: rgba(255,0,0,0.2);
-  border: none;
-  color: #ff5e5e;
-  padding: 2px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  transition: background 0.2s;
-}
-.process-item button:hover {
-  background: rgba(255,0,0,0.4);
-}
-body.light-theme .process-item {
-  background: rgba(0,0,0,0.04);
-}
-body.light-theme .process-item .proc-name {
-  color: #222;
-}
+/* ===== КОРЗИНА ===== */
+.trash-empty { text-align:center; color:#888; padding:30px 0; font-size:16px; }
+.trash-item { display:flex; align-items:center; padding:6px 10px; gap:10px; background:rgba(255,255,255,0.04); border-radius:4px; margin-bottom:3px; }
+.trash-item .trash-icon { width:20px; height:20px; }
+.trash-item .trash-name { flex:1; color:var(--text-primary); font-size:13px; }
+.trash-item .trash-actions button { background:rgba(255,255,255,0.1); border:none; color:#ddd; padding:2px 10px; border-radius:4px; margin:0 3px; transition:background .2s; font-size:12px; }
+.trash-item .trash-actions button:hover { background:rgba(255,255,255,0.2); }
+.trash-item .trash-actions .restore-btn:hover { color:#50fa7b; }
+.trash-item .trash-actions .delete-btn:hover { color:#ff5e5e; }
+.trash-toolbar { display:flex; gap:6px; margin-bottom:10px; }
+.trash-toolbar button { background:rgba(255,255,255,0.1); border:none; color:var(--text-primary); padding:3px 14px; border-radius:4px; transition:background .2s; display:flex; align-items:center; gap:4px; font-size:12px; }
+.trash-toolbar button .icon { width:14px; height:14px; }
+.trash-toolbar button:hover { background:rgba(255,255,255,0.2); }
+body.light-theme .trash-item { background:rgba(0,0,0,0.04); }
+body.light-theme .trash-item .trash-name { color:#222; }
+body.light-theme .trash-toolbar button { background:rgba(0,0,0,0.05); color:#222; }
+body.light-theme .trash-toolbar button:hover { background:rgba(0,0,0,0.12); }
 
-/* ============================================================
-   КОРЗИНА
-   ============================================================ */
-.trash-empty {
-  text-align: center;
-  color: #888;
-  padding: 30px 0;
-  font-size: 16px;
-}
-.trash-item {
-  display: flex;
-  align-items: center;
-  padding: 6px 10px;
-  gap: 10px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 4px;
-  margin-bottom: 3px;
-}
-.trash-item .trash-icon {
-  width: 20px;
-  height: 20px;
-}
-.trash-item .trash-name {
-  flex: 1;
-  color: var(--text-primary);
-  font-size: 13px;
-}
-.trash-item .trash-actions button {
-  background: rgba(255,255,255,0.1);
-  border: none;
-  color: #ddd;
-  padding: 2px 10px;
-  border-radius: 4px;
-  margin: 0 3px;
-  transition: background 0.2s;
-  font-size: 12px;
-}
-.trash-item .trash-actions button:hover {
-  background: rgba(255,255,255,0.2);
-}
-.trash-item .trash-actions .restore-btn:hover {
-  color: #50fa7b;
-}
-.trash-item .trash-actions .delete-btn:hover {
-  color: #ff5e5e;
-}
-.trash-toolbar {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-.trash-toolbar button {
-  background: rgba(255,255,255,0.1);
-  border: none;
-  color: var(--text-primary);
-  padding: 3px 14px;
-  border-radius: 4px;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-}
-.trash-toolbar button .icon {
-  width: 14px;
-  height: 14px;
-}
-.trash-toolbar button:hover {
-  background: rgba(255,255,255,0.2);
-}
-body.light-theme .trash-item {
-  background: rgba(0,0,0,0.04);
-}
-body.light-theme .trash-item .trash-name {
-  color: #222;
-}
-body.light-theme .trash-toolbar button {
-  background: rgba(0,0,0,0.05);
-  color: #222;
-}
-body.light-theme .trash-toolbar button:hover {
-  background: rgba(0,0,0,0.12);
-}
+/* ===== ИГРЫ ===== */
+.game-canvas-wrapper { display:flex; justify-content:center; }
+.game-canvas-wrapper canvas { background:#111; border-radius:6px; image-rendering:pixelated; }
+.game-score { text-align:center; color:var(--text-primary); font-size:16px; margin-bottom:6px; }
+.game-level { text-align:center; color:var(--text-secondary); font-size:13px; margin-bottom:4px; }
+body.light-theme .game-canvas-wrapper canvas { background:#f0f0f0; }
 
-/* ============================================================
-   ИГРЫ
-   ============================================================ */
-.game-canvas-wrapper {
-  display: flex;
-  justify-content: center;
-}
-.game-canvas-wrapper canvas {
-  background: #111;
-  border-radius: 6px;
-  image-rendering: pixelated;
-}
-.game-score {
-  text-align: center;
-  color: var(--text-primary);
-  font-size: 16px;
-  margin-bottom: 6px;
-}
-.game-level {
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 13px;
-  margin-bottom: 4px;
-}
-body.light-theme .game-canvas-wrapper canvas {
-  background: #f0f0f0;
-}
+/* ===== МАГАЗИН ===== */
+.store-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; padding:6px; }
+.store-item { background:rgba(255,255,255,0.05); border-radius:10px; padding:14px; text-align:center; border:1px solid var(--border-light); transition:background .2s,transform .15s; }
+.store-item:hover { background:rgba(255,255,255,0.08); transform:translateY(-2px); }
+.store-item .app-icon { font-size:42px; margin-bottom:6px; }
+.store-item .app-name { font-size:15px; color:var(--text-primary); font-weight:500; }
+.store-item .app-desc { font-size:12px; color:var(--text-secondary); margin:4px 0 10px; }
+.store-item .app-actions button { padding:4px 14px; border:none; border-radius:4px; font-size:12px; transition:background .2s; }
+.store-item .install-btn { background:var(--accent); color:#fff; }
+.store-item .install-btn:hover { background:var(--accent-hover); }
+.store-item .uninstall-btn { background:rgba(255,0,0,0.2); color:#ff5e5e; }
+.store-item .uninstall-btn:hover { background:rgba(255,0,0,0.4); }
+.store-item .installed-badge { color:#50fa7b; font-size:12px; }
+body.light-theme .store-item { background:rgba(0,0,0,0.03); border-color:rgba(0,0,0,0.05); }
+body.light-theme .store-item .app-name { color:#222; }
+body.light-theme .store-item .app-desc { color:#555; }
 
-/* ============================================================
-   МАГАЗИН
-   ============================================================ */
-.store-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 14px;
-  padding: 6px;
-}
-.store-item {
-  background: rgba(255,255,255,0.05);
-  border-radius: 10px;
-  padding: 14px;
-  text-align: center;
-  border: 1px solid var(--border-light);
-  transition: background 0.2s, transform 0.15s;
-}
-.store-item:hover {
-  background: rgba(255,255,255,0.08);
-  transform: translateY(-2px);
-}
-.store-item .app-icon {
-  font-size: 42px;
-  margin-bottom: 6px;
-}
-.store-item .app-name {
-  font-size: 15px;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-.store-item .app-desc {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin: 4px 0 10px;
-}
-.store-item .app-actions button {
-  padding: 4px 14px;
-  border: none;
-  border-radius: 4px;
-  font-size: 12px;
-  transition: background 0.2s;
-}
-.store-item .install-btn {
-  background: var(--accent);
-  color: #fff;
-}
-.store-item .install-btn:hover {
-  background: var(--accent-hover);
-}
-.store-item .uninstall-btn {
-  background: rgba(255,0,0,0.2);
-  color: #ff5e5e;
-}
-.store-item .uninstall-btn:hover {
-  background: rgba(255,0,0,0.4);
-}
-.store-item .installed-badge {
-  color: #50fa7b;
-  font-size: 12px;
-}
-body.light-theme .store-item {
-  background: rgba(0,0,0,0.03);
-  border-color: rgba(0,0,0,0.05);
-}
-body.light-theme .store-item .app-name {
-  color: #222;
-}
-body.light-theme .store-item .app-desc {
-  color: #555;
-}
-
-/* ============================================================
-   АДАПТИВ
-   ============================================================ */
+/* ===== АДАПТИВ ===== */
 @media (max-width: 768px) {
-  .desktop-icon {
-    position: relative !important;
-    width: 68px;
-    padding: 8px 2px;
-    margin: 4px auto;
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    background: transparent;
-    backdrop-filter: none;
-    border: none;
-  }
-  .desktop-icon:hover {
-    background: rgba(255,255,255,0.08);
-    border-radius: 8px;
-  }
-  .desktop-icon .icon {
-    width: 44px;
-    height: 44px;
-  }
-  .desktop-icon .label {
-    font-size: 10px;
-    max-width: 64px;
-  }
-  #desktop {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-content: flex-start;
-    padding-top: 15px;
-    gap: 8px;
-    overflow-y: auto;
-  }
-  .window {
-    width: 98% !important;
-    height: 94% !important;
-    left: 1% !important;
-    top: 2% !important;
-    border-radius: 8px;
-    resize: none !important;
-    min-width: unset;
-    min-height: unset;
-  }
-  .window-header {
-    padding: 5px 8px;
-    cursor: default;
-  }
-  .window-title {
-    font-size: 12px;
-  }
-  .window-controls button {
-    font-size: 16px;
-  }
-  .window-content {
-    padding: 10px;
-    font-size: 13px;
-  }
-  #taskbar {
-    height: 42px;
-    padding: 0 6px;
-  }
-  #start-btn {
-    padding: 3px 10px;
-    font-size: 13px;
-    margin-right: 5px;
-  }
-  #start-btn .icon {
-    width: 16px;
-    height: 16px;
-  }
-  #taskbar-clock {
-    font-size: 12px;
-  }
-  .taskbar-item {
-    padding: 2px 8px;
-    font-size: 11px;
-  }
-  #collapse-all-btn {
-    padding: 2px 6px;
-    font-size: 11px;
-  }
-  #collapse-all-btn .icon {
-    width: 14px;
-    height: 14px;
-  }
-  #taskbar-windows {
-    gap: 3px;
-  }
-  .fm-toolbar button {
-    font-size: 11px;
-    padding: 3px 8px;
-  }
-  .calc-grid {
-    max-width: 220px;
-  }
-  .calc-btn {
-    font-size: 16px;
-    padding: 8px;
-  }
-  .settings-section .wallpaper-item {
-    width: 55px;
-    height: 40px;
-  }
-  #context-menu .menu-item {
-    padding: 8px 14px;
-    font-size: 14px;
-  }
-  #widgets {
-    top: 8px;
-    right: 8px;
-    gap: 4px;
-  }
-  .widget-clock .time {
-    font-size: 20px;
-  }
-  .widget-clock, .widget-sysinfo, .widget-weather {
-    padding: 5px 10px;
-    min-width: 100px;
-    font-size: 12px;
-  }
+  .desktop-icon { position:relative!important; width:68px; padding:8px 2px; margin:4px auto; display:inline-flex; flex-direction:column; align-items:center; background:transparent; backdrop-filter:none; border:none; }
+  .desktop-icon:hover { background:rgba(255,255,255,0.08); border-radius:8px; }
+  .desktop-icon .icon { width:44px; height:44px; }
+  .desktop-icon .label { font-size:10px; max-width:64px; }
+  #desktop { display:flex; flex-wrap:wrap; justify-content:center; align-content:flex-start; padding-top:15px; gap:8px; overflow-y:auto; }
+  .window { width:98%!important; height:94%!important; left:1%!important; top:2%!important; border-radius:8px; resize:none!important; min-width:unset; min-height:unset; }
+  .window-header { padding:5px 8px; cursor:default; }
+  .window-title { font-size:12px; }
+  .window-controls button { font-size:16px; }
+  .window-content { padding:10px; font-size:13px; }
+  #taskbar { height:42px; padding:0 6px; }
+  #start-btn { padding:3px 10px; font-size:13px; margin-right:5px; }
+  #start-btn .icon { width:16px; height:16px; }
+  #taskbar-clock { font-size:12px; }
+  .taskbar-item { padding:2px 8px; font-size:11px; }
+  #collapse-all-btn { padding:2px 6px; font-size:11px; }
+  #collapse-all-btn .icon { width:14px; height:14px; }
+  #taskbar-windows { gap:3px; }
+  .fm-toolbar button { font-size:11px; padding:3px 8px; }
+  .calc-grid { max-width:220px; }
+  .calc-btn { font-size:16px; padding:8px; }
+  .settings-section .wallpaper-item { width:55px; height:40px; }
+  #context-menu .menu-item { padding:8px 14px; font-size:14px; }
+  #widgets { top:8px; right:8px; gap:4px; }
+  .widget-clock .time { font-size:20px; }
+  .widget-clock, .widget-sysinfo, .widget-weather { padding:5px 10px; min-width:100px; font-size:12px; }
 }
+
+/* ===== НОВЫЕ СТИЛИ ДЛЯ НАСТРОЕК, РЕДАКТОРА ===== */
+.settings-section { margin-bottom:18px; }
+.settings-section h3 { color:var(--text-primary); margin-bottom:8px; font-weight:400; border-bottom:1px solid var(--border-light); padding-bottom:5px; font-size:15px; }
+.settings-section .theme-buttons { display:flex; gap:8px; flex-wrap:wrap; }
+.settings-section .theme-buttons button { padding:5px 18px; border-radius:4px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:#ccc; transition:background .2s; font-size:13px; }
+.settings-section .theme-buttons button:hover { background:rgba(255,255,255,0.1); }
+.settings-section .theme-buttons button.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+.wallpaper-grid { display:flex; flex-wrap:wrap; gap:10px; }
+.wallpaper-item { width:70px; height:50px; border-radius:6px; cursor:pointer; border:2px solid transparent; transition:border .2s; background-size:cover; background-position:center; }
+.wallpaper-item:hover { border-color:rgba(255,255,255,0.4); }
+.wallpaper-item.active { border-color:var(--accent); }
+body.light-theme .settings-section h3 { color:#222; border-bottom-color:rgba(0,0,0,0.1); }
+
+/* Редактор */
+.editor-area { display:flex; flex-direction:column; height:100%; }
+.editor-area textarea { flex:1; background:#111; color:#eee; border:none; padding:10px; font-family:'Courier New',monospace; font-size:13px; resize:none; outline:none; }
+.editor-toolbar { display:flex; gap:6px; padding:6px; background:rgba(255,255,255,0.05); align-items:center; }
+.editor-toolbar button { background:rgba(255,255,255,0.1); border:none; color:var(--text-primary); padding:3px 14px; border-radius:4px; font-size:12px; transition:background .2s; display:flex; align-items:center; gap:4px; }
+.editor-toolbar button .icon { width:14px; height:14px; }
+.editor-toolbar button:hover { background:rgba(255,255,255,0.2); }
+.editor-toolbar .file-info { flex:1; color:#888; font-size:12px; padding:3px 6px; }
+body.light-theme .editor-area textarea { background:#fafafa; color:#222; }
