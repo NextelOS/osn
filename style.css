@@ -198,6 +198,21 @@ body.light-theme .toast{background:rgba(255,255,255,0.92);color:#222}
 #dialog-box .dialog-buttons .btn-confirm:hover{background:var(--accent-hover)}
 
 /* ============================================================
+   МЕНЮ ПУСК (ВЫПАДАЮЩЕЕ)
+   ============================================================ */
+#start-menu{position:absolute;bottom:48px;left:0;width:260px;max-height:400px;overflow-y:auto;background:var(--bg-menu);backdrop-filter:blur(10px);border-radius:8px;box-shadow:0 -5px 20px rgba(0,0,0,0.5);border:1px solid var(--border-light);z-index:100000;padding:8px}
+#start-menu button{display:block;width:100%;text-align:left;padding:8px 12px;background:rgba(255,255,255,0.05);border:none;color:var(--text-primary);border-radius:4px;font-size:14px;transition:background .2s;margin-bottom:4px;cursor:pointer}
+#start-menu button:hover{background:rgba(255,255,255,0.15)}
+
+/* ============================================================
+   БЛОКИРОВКА ЭКРАНА
+   ============================================================ */
+#lock-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000000;display:none;justify-content:center;align-items:center;color:#fff}
+#lock-screen-box{text-align:center}
+#lock-screen-box input{padding:10px;border-radius:4px;border:none;margin:10px 0;font-size:16px}
+#lock-screen-box button{padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer}
+
+/* ============================================================
    ГЛОБАЛЬНЫЙ ПОИСК
    ============================================================ */
 #search-window .search-input{width:100%;padding:10px 16px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:8px;color:var(--text-primary);font-size:16px;outline:none}
