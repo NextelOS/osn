@@ -106,6 +106,7 @@ body.light-theme #system-tray .tray-item{color:#222}
 body.light-theme .desktop-icon{color:#222;background:rgba(255,255,255,0.5)}
 body.light-theme .desktop-icon:hover{background:rgba(255,255,255,0.7)}
 body.light-theme .desktop-icon.selected{outline-color:var(--accent);background:rgba(74,105,189,0.2)}
+.desktop-icon.folder{background:rgba(255,215,0,0.15);border-color:rgba(255,215,0,0.3)}
 
 /* ============================================================
    ПАНЕЛЬ ЗАДАЧ
@@ -126,12 +127,16 @@ body.light-theme .desktop-icon.selected{outline-color:var(--accent);background:r
 #collapse-all-btn .icon{width:16px;height:16px}
 #tray-btn{background:rgba(255,255,255,0.1);border:none;color:#aaa;padding:3px 8px;border-radius:4px;margin-right:6px;font-size:16px;transition:background .2s}
 #tray-btn:hover{background:rgba(255,255,255,0.2);color:#fff}
+#taskbar-search{background:rgba(255,255,255,0.1);border:none;border-radius:4px;padding:3px 8px;color:#fff;font-size:13px;width:160px;margin-right:10px;outline:none}
+#taskbar-search:focus{background:rgba(255,255,255,0.2)}
 body.light-theme #taskbar{background:var(--bg-taskbar);border-top-color:rgba(0,0,0,0.1)}
-body.light-theme #taskbar,body.light-theme #taskbar-clock,body.light-theme #start-btn,body.light-theme #collapse-all-btn,body.light-theme #tray-btn{color:#222}
+body.light-theme #taskbar,body.light-theme #taskbar-clock,body.light-theme #start-btn,body.light-theme #collapse-all-btn,body.light-theme #tray-btn,body.light-theme #taskbar-search{color:#222}
 body.light-theme #start-btn{background:rgba(0,0,0,0.05)}
 body.light-theme #start-btn:hover{background:rgba(0,0,0,0.15)}
 body.light-theme .taskbar-item{background:rgba(0,0,0,0.05);color:#222}
 body.light-theme .taskbar-item.active{background:rgba(0,0,0,0.15)}
+body.light-theme #taskbar-search{background:rgba(0,0,0,0.05);color:#222}
+body.light-theme #taskbar-search:focus{background:rgba(0,0,0,0.1)}
 
 /* ============================================================
    ОКНА
@@ -274,7 +279,7 @@ body.light-theme .calc-btn{background:rgba(0,0,0,0.05);color:#222}
 body.light-theme .calc-btn:hover{background:rgba(0,0,0,0.12)}
 
 /* ============================================================
-   PIGMO PRO – улучшенный
+   PIGMO PRO
    ============================================================ */
 .pigmo-toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;align-items:center;padding:4px;background:rgba(255,255,255,0.03);border-radius:6px}
 .pigmo-toolbar button,.pigmo-toolbar select{background:rgba(255,255,255,0.08);border:none;color:var(--text-primary);padding:3px 10px;border-radius:4px;font-size:12px;transition:background .2s;cursor:pointer}
@@ -400,10 +405,16 @@ body.light-theme .game-canvas-wrapper canvas{background:#f0f0f0}
 .store-item .uninstall-btn{background:rgba(255,0,0,0.2);color:#ff5e5e}
 .store-item .uninstall-btn:hover{background:rgba(255,0,0,0.35);transform:scale(1.03)}
 .store-item .installed-badge{color:#50fa7b;font-size:13px;font-weight:500;display:block;margin-bottom:6px}
+.store-header{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.store-header input{flex:1;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:6px;color:var(--text-primary);outline:none;font-size:14px}
+.store-header input:focus{border-color:var(--accent)}
+.store-header select{padding:6px 10px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:6px;color:var(--text-primary);outline:none;font-size:14px}
+.store-header select:focus{border-color:var(--accent)}
 body.light-theme .store-item{background:rgba(0,0,0,0.03);border-color:rgba(0,0,0,0.05)}
 body.light-theme .store-item:hover{background:rgba(0,0,0,0.06)}
 body.light-theme .store-item .app-name{color:#222}
 body.light-theme .store-item .app-desc{color:#555}
+body.light-theme .store-header input,body.light-theme .store-header select{background:rgba(0,0,0,0.05);color:#222;border-color:rgba(0,0,0,0.1)}
 
 /* ============================================================
    НАСТРОЙКИ
@@ -465,7 +476,7 @@ body.light-theme .weather-full .weather-main{background:rgba(0,0,0,0.03)}
 body.light-theme .weather-full .weather-detail{background:rgba(0,0,0,0.02)}
 
 /* ============================================================
-   КОНВЕРТЕР ВЕЛИЧИН
+   КОНВЕРТЕР
    ============================================================ */
 .converter-container{padding:8px}
 .converter-container .conv-row{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
@@ -476,7 +487,7 @@ body.light-theme .weather-full .weather-detail{background:rgba(0,0,0,0.02)}
 body.light-theme .converter-container .conv-row select,body.light-theme .converter-container .conv-row input{background:rgba(0,0,0,0.05);color:#222;border-color:rgba(0,0,0,0.1)}
 
 /* ============================================================
-   TO-DO ПЛАНИРОВЩИК
+   TO-DO
    ============================================================ */
 .todo-container{padding:8px}
 .todo-container .todo-input-row{display:flex;gap:8px;margin-bottom:10px}
@@ -562,6 +573,7 @@ body.light-theme .code-editor-container .code-line-numbers{background:rgba(0,0,0
 .art-container .art-result{text-align:center;margin-top:10px}
 .art-container .art-result img{max-width:100%;max-height:400px;border-radius:8px;border:1px solid var(--border-light)}
 .art-container .art-result .art-placeholder{color:var(--text-secondary);font-size:16px;padding:40px;background:rgba(255,255,255,0.03);border-radius:8px}
+.art-container .art-loading{color:var(--text-primary);font-size:14px;padding:20px}
 
 /* ============================================================
    ПЕРЕВОДЧИК
@@ -609,6 +621,98 @@ body.light-theme .wiki-container .wiki-search-row input{background:rgba(0,0,0,0.
 body.light-theme .currency-container .currency-controls select{background:rgba(0,0,0,0.05);color:#222;border-color:rgba(0,0,0,0.1)}
 
 /* ============================================================
+   TABLIQ (таблицы)
+   ============================================================ */
+.tabliq-container{padding:8px}
+.tabliq-container .tabliq-toolbar{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.tabliq-container .tabliq-toolbar button{padding:3px 12px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);font-size:12px;transition:all .2s}
+.tabliq-container .tabliq-toolbar button:hover{background:var(--bg-hover)}
+.tabliq-container .tabliq-table-wrap{overflow:auto;max-height:300px;border:1px solid var(--border-light);border-radius:4px}
+.tabliq-container table{border-collapse:collapse;width:100%;font-size:13px}
+.tabliq-container table td{border:1px solid var(--border-light);padding:4px 8px;min-width:60px;color:var(--text-primary);background:var(--bg-window);outline:none}
+.tabliq-container table td:focus{background:var(--bg-hover);border-color:var(--accent)}
+.tabliq-container .tabliq-formula{color:var(--text-secondary);font-size:12px;margin-top:6px;text-align:center}
+body.light-theme .tabliq-container .tabliq-toolbar button{background:rgba(0,0,0,0.05);color:#222;border-color:rgba(0,0,0,0.1)}
+body.light-theme .tabliq-container table td{background:#fff;border-color:rgba(0,0,0,0.1);color:#222}
+
+/* ============================================================
+   VIRUCIDE (антивирус)
+   ============================================================ */
+.virucide-container{padding:8px}
+.virucide-container .virucide-status{text-align:center;padding:20px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:12px}
+.virucide-container .virucide-status .status-text{font-size:18px;color:var(--text-primary)}
+.virucide-container .virucide-status .status-detail{color:var(--text-secondary);font-size:14px;margin-top:4px}
+.virucide-container .virucide-scan-btn{padding:8px 24px;background:var(--accent);color:#fff;border-radius:6px;font-size:14px;transition:background .2s;margin:0 auto;display:block}
+.virucide-container .virucide-scan-btn:hover{background:var(--accent-hover)}
+.virucide-container .virucide-results{margin-top:12px;max-height:200px;overflow-y:auto}
+.virucide-container .virucide-results .scan-item{padding:4px 10px;display:flex;justify-content:space-between;border-bottom:1px solid var(--border-light);font-size:13px;color:var(--text-primary)}
+.virucide-container .virucide-results .scan-item .status-safe{color:#50fa7b}
+.virucide-container .virucide-results .scan-item .status-infected{color:#ff5555}
+body.light-theme .virucide-container .virucide-status{background:rgba(0,0,0,0.03)}
+
+/* ============================================================
+   СИМУЛЯТОР ТОРГОВОЙ ПЛАТФОРМЫ
+   ============================================================ */
+.trader-container{padding:8px}
+.trader-container .trader-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.trader-container .trader-stats .stat-box{background:rgba(255,255,255,0.03);border-radius:8px;padding:10px;text-align:center}
+.trader-container .trader-stats .stat-box .stat-label{color:var(--text-secondary);font-size:11px;text-transform:uppercase}
+.trader-container .trader-stats .stat-box .stat-value{color:var(--text-primary);font-size:20px;font-weight:500;margin-top:2px}
+.trader-container .trader-stats .stat-box .stat-value.green{color:#50fa7b}
+.trader-container .trader-stats .stat-box .stat-value.red{color:#ff5555}
+.trader-container .trader-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
+.trader-container .trader-controls button{padding:4px 16px;background:var(--accent);color:#fff;border-radius:4px;transition:background .2s}
+.trader-container .trader-controls button:hover{background:var(--accent-hover)}
+.trader-container .trader-log{max-height:150px;overflow-y:auto;background:rgba(0,0,0,0.2);border-radius:4px;padding:8px;font-size:12px;color:var(--text-secondary);font-family:monospace}
+.trader-container .trader-log .log-entry{padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+.trader-container .trader-log .log-entry .log-time{color:#888;margin-right:8px}
+body.light-theme .trader-container .trader-stats .stat-box{background:rgba(0,0,0,0.03)}
+body.light-theme .trader-container .trader-log{background:rgba(0,0,0,0.05)}
+
+/* ============================================================
+   ИГРА 2048
+   ============================================================ */
+.game2048-container{display:flex;flex-direction:column;align-items:center;padding:8px}
+.game2048-container .game2048-board{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:400px;height:400px;background:var(--border-light);border-radius:8px;padding:8px}
+.game2048-container .game2048-cell{background:var(--bg-window);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:var(--text-primary);transition:all .1s}
+.game2048-container .game2048-cell[data-value="2"]{background:#eee4da;color:#776e65}
+.game2048-container .game2048-cell[data-value="4"]{background:#ede0c8;color:#776e65}
+.game2048-container .game2048-cell[data-value="8"]{background:#f2b179;color:#f9f6f2}
+.game2048-container .game2048-cell[data-value="16"]{background:#f59563;color:#f9f6f2}
+.game2048-container .game2048-cell[data-value="32"]{background:#f67c5f;color:#f9f6f2}
+.game2048-container .game2048-cell[data-value="64"]{background:#f65e3b;color:#f9f6f2}
+.game2048-container .game2048-cell[data-value="128"]{background:#edcf72;color:#f9f6f2}
+.game2048-container .game2048-cell[data-value="256"]{background:#edcc61;color:#f9f6f2}
+.game2048-container .game2048-cell[data-value="512"]{background:#edc850;color:#f9f6f2}
+.game2048-container .game2048-cell[data-value="1024"]{background:#edc53f;color:#f9f6f2}
+.game2048-container .game2048-cell[data-value="2048"]{background:#edc22e;color:#f9f6f2}
+.game2048-container .game2048-score{color:var(--text-primary);font-size:18px;margin:8px 0}
+.game2048-container .game2048-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.game2048-container .game2048-controls button{padding:4px 16px;background:var(--accent);color:#fff;border-radius:4px;transition:background .2s}
+.game2048-container .game2048-controls button:hover{background:var(--accent-hover)}
+@media(max-width:450px){.game2048-container .game2048-board{width:300px;height:300px}.game2048-container .game2048-cell{font-size:28px}}
+
+/* ============================================================
+   ИГРА ПЯТНАШКИ
+   ============================================================ */
+.puzzle-container{display:flex;flex-direction:column;align-items:center;padding:8px}
+.puzzle-container .puzzle-board{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;width:400px;height:400px}
+.puzzle-container .puzzle-cell{background:var(--accent);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#fff;cursor:pointer;transition:all .15s}
+.puzzle-container .puzzle-cell:hover{background:var(--accent-hover)}
+.puzzle-container .puzzle-cell.empty{background:transparent;cursor:default}
+.puzzle-container .puzzle-status{color:var(--text-primary);font-size:16px;margin:8px 0}
+.puzzle-container .puzzle-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.puzzle-container .puzzle-controls button{padding:4px 16px;background:var(--accent);color:#fff;border-radius:4px;transition:background .2s}
+.puzzle-container .puzzle-controls button:hover{background:var(--accent-hover)}
+@media(max-width:450px){.puzzle-container .puzzle-board{width:300px;height:300px}.puzzle-container .puzzle-cell{font-size:24px}}
+
+/* ============================================================
+   КОНТЕКСТНОЕ МЕНЮ РАБОЧЕГО СТОЛА (дополнительные пункты)
+   ============================================================ */
+#context-menu .menu-item.create{color:#50fa7b}
+#context-menu .menu-item.create:hover{background:rgba(80,250,123,0.15)}
+
+/* ============================================================
    АДАПТИВ
    ============================================================ */
 @media(max-width:768px){
@@ -630,6 +734,7 @@ body.light-theme .currency-container .currency-controls select{background:rgba(0
   #collapse-all-btn{padding:2px 6px;font-size:11px}
   #collapse-all-btn .icon{width:14px;height:14px}
   #taskbar-windows{gap:3px}
+  #taskbar-search{width:100px;font-size:12px}
   .fm-toolbar button{font-size:11px;padding:3px 8px}
   .calc-grid{max-width:220px}
   .calc-btn{font-size:16px;padding:8px}
@@ -645,4 +750,9 @@ body.light-theme .currency-container .currency-controls select{background:rgba(0
   .store-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   .chess-container .chess-board{width:280px;height:280px}
   .chess-container .chess-cell{width:35px;height:35px;font-size:20px}
+  .trader-container .trader-stats{grid-template-columns:1fr 1fr}
+  .game2048-container .game2048-board{width:280px;height:280px}
+  .game2048-container .game2048-cell{font-size:24px}
+  .puzzle-container .puzzle-board{width:280px;height:280px}
+  .puzzle-container .puzzle-cell{font-size:22px}
 }
