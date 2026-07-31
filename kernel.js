@@ -1,5 +1,4 @@
-// kernel.js – Ядро оконной системы, уведомления, звук, диалоги
-
+// kernel.js
 const kernel = {
   windows: [],
   activeWindowId: null,
@@ -12,13 +11,9 @@ const kernel = {
 
   initAudio() {
     if (!this.audioCtx) {
-      try {
-        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      } catch (e) {}
+      try { this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
     }
-    if (this.audioCtx && this.audioCtx.state === 'suspended') {
-      this.audioCtx.resume();
-    }
+    if (this.audioCtx && this.audioCtx.state === 'suspended') this.audioCtx.resume();
   },
 
   playSound(type) {
@@ -28,33 +23,29 @@ const kernel = {
       if (!this.audioCtx || this.audioCtx.state === 'closed') return;
       const osc = this.audioCtx.createOscillator();
       const gain = this.audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(this.audioCtx.destination);
+      osc.connect(gain); gain.connect(this.audioCtx.destination);
       const now = this.audioCtx.currentTime;
-      switch (type) {
+      switch(type) {
         case 'open':
           osc.frequency.setValueAtTime(600, now);
           osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
           gain.gain.setValueAtTime(0.2, now);
           gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-          osc.start(now);
-          osc.stop(now + 0.1);
+          osc.start(now); osc.stop(now + 0.1);
           break;
         case 'close':
           osc.frequency.setValueAtTime(800, now);
           osc.frequency.exponentialRampToValueAtTime(400, now + 0.1);
           gain.gain.setValueAtTime(0.2, now);
           gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-          osc.start(now);
-          osc.stop(now + 0.1);
+          osc.start(now); osc.stop(now + 0.1);
           break;
         case 'notification':
           osc.frequency.setValueAtTime(1000, now);
           osc.frequency.setValueAtTime(800, now + 0.1);
           gain.gain.setValueAtTime(0.15, now);
           gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-          osc.start(now);
-          osc.stop(now + 0.2);
+          osc.start(now); osc.stop(now + 0.2);
           break;
         case 'error':
           osc.type = 'sawtooth';
@@ -62,11 +53,10 @@ const kernel = {
           osc.frequency.setValueAtTime(200, now + 0.15);
           gain.gain.setValueAtTime(0.15, now);
           gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-          osc.start(now);
-          osc.stop(now + 0.2);
+          osc.start(now); osc.stop(now + 0.2);
           break;
       }
-    } catch (e) {}
+    } catch(e) {}
   },
 
   showNotification(message, type = 'info', duration = 3000) {
@@ -105,7 +95,7 @@ const kernel = {
   }
 };
 
-// Инициализация диалоговых кнопок (один раз)
+// Инициализация диалоговых кнопок
 document.getElementById('dialog-cancel').addEventListener('click', () => {
   const overlay = document.getElementById('dialog-overlay');
   overlay.style.display = 'none';
@@ -127,21 +117,21 @@ document.getElementById('dialog-overlay').addEventListener('click', (e) => {
 // Часы
 function updateClock() {
   const now = new Date();
-  const h = String(now.getHours()).padStart(2, '0');
-  const m = String(now.getMinutes()).padStart(2, '0');
-  const s = String(now.getSeconds()).padStart(2, '0');
-  document.getElementById('taskbar-clock').textContent = h + ':' + m + ':' + s;
-  document.getElementById('taskbar-clock').dataset.date = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('taskbar-clock').textContent = h+':'+m+':'+s;
+  document.getElementById('taskbar-clock').dataset.date = now.toLocaleDateString('ru-RU', { day:'numeric', month:'long', year:'numeric' });
   if (document.getElementById('widget-time')) {
-    document.getElementById('widget-time').textContent = h + ':' + m + ':' + s;
-    document.getElementById('widget-date').textContent = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+    document.getElementById('widget-time').textContent = h+':'+m+':'+s;
+    document.getElementById('widget-date').textContent = now.toLocaleDateString('ru-RU', { day:'numeric', month:'long', year:'numeric' });
   }
   if (window._startTime) {
     const uptime = Math.floor((now - window._startTime) / 1000);
-    const uh = String(Math.floor(uptime / 3600)).padStart(2, '0');
-    const um = String(Math.floor((uptime % 3600) / 60)).padStart(2, '0');
-    const us = String(uptime % 60).padStart(2, '0');
-    if (document.getElementById('widget-uptime')) document.getElementById('widget-uptime').textContent = uh + ':' + um + ':' + us;
+    const uh = String(Math.floor(uptime / 3600)).padStart(2,'0');
+    const um = String(Math.floor((uptime % 3600) / 60)).padStart(2,'0');
+    const us = String(uptime % 60).padStart(2,'0');
+    if (document.getElementById('widget-uptime')) document.getElementById('widget-uptime').textContent = uh+':'+um+':'+us;
   }
 }
 window._startTime = new Date();
@@ -171,24 +161,18 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Функции управления окнами
+// Функции окон
 function createWindow(title, contentHTML, options = {}) {
   const id = kernel.nextId++;
   const winObj = {
-    id,
-    title,
-    contentHTML,
-    element: null,
-    isMinimized: false,
-    isPinned: false,
+    id, title, contentHTML, element: null,
+    isMinimized: false, isPinned: false,
     onClose: options.onClose || null,
-    width: options.width || 400,
-    height: options.height || 280,
+    width: options.width || 400, height: options.height || 280,
     left: options.left || (100 + kernel.windows.length * 30),
     top: options.top || (80 + kernel.windows.length * 30)
   };
-  const maxLeft = window.innerWidth - winObj.width;
-  const maxTop = window.innerHeight - winObj.height - 60;
+  const maxLeft = window.innerWidth - winObj.width, maxTop = window.innerHeight - winObj.height - 60;
   if (winObj.left > maxLeft) winObj.left = Math.max(10, maxLeft - 20);
   if (winObj.top > maxTop) winObj.top = Math.max(10, maxTop - 20);
   if (winObj.left < 10) winObj.left = 10;
@@ -197,10 +181,8 @@ function createWindow(title, contentHTML, options = {}) {
   const win = document.createElement('div');
   win.className = 'window';
   win.dataset.windowId = id;
-  win.style.left = winObj.left + 'px';
-  win.style.top = winObj.top + 'px';
-  win.style.width = winObj.width + 'px';
-  win.style.height = winObj.height + 'px';
+  win.style.left = winObj.left + 'px'; win.style.top = winObj.top + 'px';
+  win.style.width = winObj.width + 'px'; win.style.height = winObj.height + 'px';
 
   const header = document.createElement('div');
   header.className = 'window-header';
@@ -214,19 +196,15 @@ function createWindow(title, contentHTML, options = {}) {
   const contentDiv = document.createElement('div');
   contentDiv.className = 'window-content';
   contentDiv.innerHTML = contentHTML;
-
-  win.appendChild(header);
-  win.appendChild(contentDiv);
+  win.appendChild(header); win.appendChild(contentDiv);
   document.getElementById('desktop').appendChild(win);
   winObj.element = win;
 
-  // Кнопки заголовка
   header.querySelector('.close-btn').addEventListener('click', (e) => { e.stopPropagation(); closeWindow(id); });
   header.querySelector('.min-btn').addEventListener('click', (e) => { e.stopPropagation(); toggleMinimize(id); });
   header.querySelector('.max-btn').addEventListener('click', (e) => { e.stopPropagation(); toggleMaximize(id); });
   header.querySelector('.pin-btn').addEventListener('click', (e) => { e.stopPropagation(); togglePin(id); });
 
-  // Перетаскивание окна
   if (window.innerWidth > 768) {
     let isDragging = false, startX, startY, origLeft, origTop;
     header.addEventListener('mousedown', (e) => {
@@ -237,25 +215,14 @@ function createWindow(title, contentHTML, options = {}) {
       origLeft = rect.left; origTop = rect.top;
       win.style.cursor = 'grabbing';
       bringToFront(id);
-      const onDrag = (e) => {
-        if (!isDragging) return;
-        win.style.left = (origLeft + e.clientX - startX) + 'px';
-        win.style.top = (origTop + e.clientY - startY) + 'px';
-      };
-      const stopDrag = () => {
-        isDragging = false;
-        win.style.cursor = '';
-        document.removeEventListener('mousemove', onDrag);
-        document.removeEventListener('mouseup', stopDrag);
-      };
-      document.addEventListener('mousemove', onDrag);
-      document.addEventListener('mouseup', stopDrag);
+      const onDrag = (e) => { if (!isDragging) return; win.style.left = (origLeft + e.clientX - startX) + 'px'; win.style.top = (origTop + e.clientY - startY) + 'px'; };
+      const stopDrag = () => { isDragging = false; win.style.cursor = ''; document.removeEventListener('mousemove', onDrag); document.removeEventListener('mouseup', stopDrag); };
+      document.addEventListener('mousemove', onDrag); document.addEventListener('mouseup', stopDrag);
       e.preventDefault();
     });
   }
 
   win.addEventListener('mousedown', () => bringToFront(id));
-
   kernel.windows.push(winObj);
   renderTaskbar();
   bringToFront(id);
@@ -295,19 +262,12 @@ function toggleMaximize(id) {
   if (!winObj) return;
   const el = winObj.element;
   if (el.style.width === '100%') {
-    el.style.width = winObj.width + 'px';
-    el.style.height = winObj.height + 'px';
-    el.style.left = winObj.left + 'px';
-    el.style.top = winObj.top + 'px';
+    el.style.width = winObj.width + 'px'; el.style.height = winObj.height + 'px';
+    el.style.left = winObj.left + 'px'; el.style.top = winObj.top + 'px';
   } else {
-    winObj.width = parseInt(el.style.width) || 400;
-    winObj.height = parseInt(el.style.height) || 280;
-    winObj.left = parseInt(el.style.left) || 100;
-    winObj.top = parseInt(el.style.top) || 80;
-    el.style.width = '100%';
-    el.style.height = 'calc(100% - 50px)';
-    el.style.left = '0';
-    el.style.top = '0';
+    winObj.width = parseInt(el.style.width) || 400; winObj.height = parseInt(el.style.height) || 280;
+    winObj.left = parseInt(el.style.left) || 100; winObj.top = parseInt(el.style.top) || 80;
+    el.style.width = '100%'; el.style.height = 'calc(100% - 50px)'; el.style.left = '0'; el.style.top = '0';
   }
   bringToFront(id);
 }
@@ -316,14 +276,8 @@ function togglePin(id) {
   const winObj = kernel.windows.find(w => w.id === id);
   if (!winObj) return;
   winObj.isPinned = !winObj.isPinned;
-  if (winObj.isPinned) {
-    winObj.element.style.zIndex = 99999;
-    kernel.pinnedWindows.push(id);
-  } else {
-    const idx = kernel.pinnedWindows.indexOf(id);
-    if (idx !== -1) kernel.pinnedWindows.splice(idx, 1);
-    bringToFront(id);
-  }
+  if (winObj.isPinned) { winObj.element.style.zIndex = 99999; kernel.pinnedWindows.push(id); }
+  else { const idx = kernel.pinnedWindows.indexOf(id); if (idx !== -1) kernel.pinnedWindows.splice(idx, 1); bringToFront(id); }
   renderTaskbar();
   kernel.showNotification(winObj.isPinned ? 'Окно закреплено' : 'Закрепление снято');
 }
@@ -346,7 +300,7 @@ function renderTaskbar() {
     const item = document.createElement('span');
     item.className = 'taskbar-item';
     if (kernel.activeWindowId === winObj.id && !winObj.isMinimized) item.classList.add('active');
-    const displayTitle = winObj.title.length > 18 ? winObj.title.slice(0, 16) + '…' : winObj.title;
+    const displayTitle = winObj.title.length > 18 ? winObj.title.slice(0,16)+'…' : winObj.title;
     item.innerHTML = `<span class="icon">${iconHTML('file')}</span>${displayTitle}`;
     if (winObj.isPinned) item.innerHTML += ' 📌';
     item.addEventListener('click', () => {
@@ -366,21 +320,16 @@ document.getElementById('collapse-all-btn').addEventListener('click', () => {
   kernel.showNotification(allMinimized ? 'Все окна развёрнуты' : 'Все окна свёрнуты');
 });
 
-function getProcessList() {
-  return kernel.windows.map(w => ({ id: w.id, title: w.title }));
-}
-function killProcess(id) {
-  closeWindow(id);
-}
+function getProcessList() { return kernel.windows.map(w => ({ id: w.id, title: w.title })); }
+function killProcess(id) { closeWindow(id); }
 
-// Экспорт в глобальную область
 window.kernel = kernel;
 window.createWindow = createWindow;
 window.closeWindow = closeWindow;
-window.toggleMinimize = toggleMinimize;
-window.toggleMaximize = toggleMaximize;
-window.togglePin = togglePin;
 window.bringToFront = bringToFront;
 window.renderTaskbar = renderTaskbar;
 window.getProcessList = getProcessList;
 window.killProcess = killProcess;
+window.toggleMinimize = toggleMinimize;
+window.toggleMaximize = toggleMaximize;
+window.togglePin = togglePin;
