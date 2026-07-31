@@ -211,6 +211,9 @@ body.light-theme .toast{background:rgba(255,255,255,0.92);color:#222}
 .browser-toolbar button{padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:4px;color:var(--text-primary);transition:background .2s}
 .browser-toolbar button:hover{background:rgba(255,255,255,0.2)}
 .browser-frame{width:100%;height:calc(100% - 40px);border:none;background:#fff}
+.browser-bookmarks{display:flex;gap:4px;flex-wrap:wrap;padding:4px 8px;background:rgba(255,255,255,0.03)}
+.browser-bookmarks .bookmark{padding:2px 10px;background:rgba(255,255,255,0.08);border-radius:12px;cursor:pointer;font-size:11px;color:var(--text-primary);transition:background .2s}
+.browser-bookmarks .bookmark:hover{background:rgba(255,255,255,0.18)}
 
 /* ============================================================
    КАЛЕНДАРЬ
@@ -297,15 +300,15 @@ body.light-theme .pigmo-toolbar button:hover,body.light-theme .pigmo-toolbar sel
 .password-item .pass-actions .del-btn{background:rgba(255,0,0,0.2);color:#ff5e5e}
 
 /* ============================================================
-   ПРЕЗЕНТАЦИЯ (улучшенная)
+   ПРЕЗЕНТАЦИЯ
    ============================================================ */
 .slide-container{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px}
-.slide-container .slide-content{max-width:90%;max-height:80%;overflow:auto;text-align:center;color:var(--text-primary);font-size:24px;padding:20px;background:rgba(255,255,255,0.03);border-radius:8px}
-.slide-container .slide-content img{max-width:100%;max-height:300px;border-radius:4px}
-.slide-container .slide-controls{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;justify-content:center}
-.slide-container .slide-controls button{padding:6px 16px;background:var(--accent);color:#fff;border-radius:4px;transition:background .2s}
-.slide-container .slide-controls button:hover{background:var(--accent-hover)}
-.slide-container .slide-counter{color:var(--text-secondary);font-size:14px;margin-top:6px}
+.slide-content{max-width:90%;max-height:80%;overflow:auto;text-align:center;color:var(--text-primary);font-size:24px;padding:20px;background:rgba(255,255,255,0.03);border-radius:8px}
+.slide-content img{max-width:100%;max-height:300px;border-radius:4px}
+.slide-controls{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;justify-content:center}
+.slide-controls button{padding:6px 16px;background:var(--accent);color:#fff;border-radius:4px;transition:background .2s}
+.slide-controls button:hover{background:var(--accent-hover)}
+.slide-counter{color:var(--text-secondary);font-size:14px;margin-top:6px}
 
 /* ============================================================
    ФАЙЛОВЫЙ МЕНЕДЖЕР
@@ -326,10 +329,14 @@ body.light-theme .pigmo-toolbar button:hover,body.light-theme .pigmo-toolbar sel
 .fm-bookmarks{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
 .fm-bookmarks .bookmark{padding:2px 10px;background:rgba(255,255,255,0.1);border-radius:12px;cursor:pointer;font-size:11px;color:var(--text-primary)}
 .fm-bookmarks .bookmark:hover{background:rgba(255,255,255,0.2)}
+.fm-search{display:flex;gap:6px;margin-bottom:6px}
+.fm-search input{flex:1;padding:3px 8px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);font-size:12px;outline:none}
+.fm-search input:focus{border-color:var(--accent)}
 body.light-theme .fm-toolbar button{background:rgba(0,0,0,0.05);color:#222}
 body.light-theme .fm-toolbar button:hover{background:rgba(0,0,0,0.12)}
 body.light-theme .fm-item .fm-name{color:#222}
 body.light-theme .fm-path{color:#555}
+body.light-theme .fm-search input{background:rgba(0,0,0,0.05);color:#222;border-color:rgba(0,0,0,0.1)}
 
 /* ============================================================
    ТЕРМИНАЛ
@@ -378,7 +385,7 @@ body.light-theme .terminal-input-line input{color:#222}
 body.light-theme .game-canvas-wrapper canvas{background:#f0f0f0}
 
 /* ============================================================
-   МАГАЗИН (улучшенный)
+   МАГАЗИН
    ============================================================ */
 .store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;padding:8px}
 .store-item{background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;text-align:center;border:1px solid var(--border-light);transition:all .2s;position:relative;overflow:hidden}
@@ -399,7 +406,7 @@ body.light-theme .store-item .app-name{color:#222}
 body.light-theme .store-item .app-desc{color:#555}
 
 /* ============================================================
-   НАСТРОЙКИ (улучшенные)
+   НАСТРОЙКИ
    ============================================================ */
 .settings-section{margin-bottom:20px}
 .settings-section h3{color:var(--text-primary);margin-bottom:10px;font-weight:500;border-bottom:1px solid var(--border-light);padding-bottom:6px;font-size:15px}
@@ -432,9 +439,13 @@ body.light-theme .settings-section .theme-buttons button:hover{background:rgba(0
 .player-progress .progress-fill{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .1s}
 .player-upload{display:flex;gap:8px;justify-content:center;margin:8px 0}
 .player-upload input[type="file"]{background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;padding:4px 8px;color:var(--text-primary);font-size:13px}
+.player-playlist{max-height:150px;overflow-y:auto;margin-top:8px}
+.player-playlist .playlist-item{padding:4px 10px;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.03);border-radius:4px;margin-bottom:2px;font-size:13px;color:var(--text-primary);cursor:pointer}
+.player-playlist .playlist-item:hover{background:rgba(255,255,255,0.08)}
+.player-playlist .playlist-item .playlist-del{cursor:pointer;color:#ff5e5e}
 
 /* ============================================================
-   ПОГОДА (полноценная)
+   ПОГОДА
    ============================================================ */
 .weather-full{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px}
 .weather-full .weather-main{grid-column:span 2;text-align:center;padding:12px;background:rgba(255,255,255,0.04);border-radius:8px}
@@ -452,6 +463,150 @@ body.light-theme .settings-section .theme-buttons button:hover{background:rgba(0
 .weather-search button:hover{background:var(--accent-hover)}
 body.light-theme .weather-full .weather-main{background:rgba(0,0,0,0.03)}
 body.light-theme .weather-full .weather-detail{background:rgba(0,0,0,0.02)}
+
+/* ============================================================
+   КОНВЕРТЕР ВЕЛИЧИН
+   ============================================================ */
+.converter-container{padding:8px}
+.converter-container .conv-row{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+.converter-container .conv-row label{color:var(--text-secondary);font-size:13px;min-width:80px}
+.converter-container .conv-row select,.converter-container .conv-row input{flex:1;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);outline:none;font-size:14px;min-width:100px}
+.converter-container .conv-row select:focus,.converter-container .conv-row input:focus{border-color:var(--accent)}
+.converter-container .conv-result{text-align:center;font-size:24px;color:var(--text-primary);padding:16px;background:rgba(255,255,255,0.03);border-radius:8px;margin-top:8px}
+body.light-theme .converter-container .conv-row select,body.light-theme .converter-container .conv-row input{background:rgba(0,0,0,0.05);color:#222;border-color:rgba(0,0,0,0.1)}
+
+/* ============================================================
+   TO-DO ПЛАНИРОВЩИК
+   ============================================================ */
+.todo-container{padding:8px}
+.todo-container .todo-input-row{display:flex;gap:8px;margin-bottom:10px}
+.todo-container .todo-input-row input{flex:1;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);outline:none;font-size:14px}
+.todo-container .todo-input-row input:focus{border-color:var(--accent)}
+.todo-container .todo-input-row select{padding:6px 10px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);outline:none;font-size:14px}
+.todo-container .todo-input-row button{padding:6px 16px;background:var(--accent);color:#fff;border-radius:4px;transition:background .2s}
+.todo-container .todo-input-row button:hover{background:var(--accent-hover)}
+.todo-container .todo-filters{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.todo-container .todo-filters button{padding:3px 12px;border-radius:12px;font-size:12px;background:rgba(255,255,255,0.05);color:var(--text-primary);transition:all .2s}
+.todo-container .todo-filters button:hover{background:rgba(255,255,255,0.12)}
+.todo-container .todo-filters button.active{background:var(--accent);color:#fff}
+.todo-container .todo-item{display:flex;align-items:center;gap:10px;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:4px;margin-bottom:4px}
+.todo-container .todo-item .todo-check{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+.todo-container .todo-item .todo-text{flex:1;color:var(--text-primary);font-size:14px}
+.todo-container .todo-item .todo-text.done{text-decoration:line-through;opacity:.5}
+.todo-container .todo-item .todo-priority{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
+.todo-container .todo-item .todo-priority.high{background:rgba(255,0,0,0.2);color:#ff5e5e}
+.todo-container .todo-item .todo-priority.medium{background:rgba(255,165,0,0.2);color:#f1c40f}
+.todo-container .todo-item .todo-priority.low{background:rgba(0,255,0,0.1);color:#50fa7b}
+.todo-container .todo-item .todo-del{cursor:pointer;color:#888;font-size:16px;transition:color .2s}
+.todo-container .todo-item .todo-del:hover{color:#ff5e5e}
+.todo-container .todo-stats{color:var(--text-secondary);font-size:13px;text-align:center;padding:4px 0}
+body.light-theme .todo-container .todo-input-row input,body.light-theme .todo-container .todo-input-row select{background:rgba(0,0,0,0.05);color:#222;border-color:rgba(0,0,0,0.1)}
+
+/* ============================================================
+   РЕДАКТОР КОДА
+   ============================================================ */
+.code-editor-container{display:flex;flex-direction:column;height:100%}
+.code-editor-container .code-toolbar{display:flex;gap:6px;padding:4px 8px;background:rgba(255,255,255,0.03);flex-wrap:wrap;align-items:center}
+.code-editor-container .code-toolbar select,.code-editor-container .code-toolbar input{padding:3px 8px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);font-size:12px;outline:none}
+.code-editor-container .code-toolbar input:focus{border-color:var(--accent)}
+.code-editor-container .code-toolbar button{padding:3px 12px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);font-size:12px;transition:all .2s}
+.code-editor-container .code-toolbar button:hover{background:var(--bg-hover)}
+.code-editor-container .code-wrapper{display:flex;flex:1;overflow:hidden}
+.code-editor-container .code-line-numbers{background:rgba(0,0,0,0.2);padding:8px 6px;color:#888;font-family:'Courier New',monospace;font-size:13px;text-align:right;min-width:40px;overflow-y:hidden;user-select:none;line-height:1.5;border-right:1px solid var(--border-light)}
+.code-editor-container .code-textarea{flex:1;background:#111;color:#eee;border:none;padding:8px;font-family:'Courier New',monospace;font-size:13px;resize:none;outline:none;line-height:1.5;tab-size:2}
+body.light-theme .code-editor-container .code-textarea{background:#fafafa;color:#222}
+body.light-theme .code-editor-container .code-toolbar select,body.light-theme .code-editor-container .code-toolbar input,body.light-theme .code-editor-container .code-toolbar button{background:rgba(0,0,0,0.05);color:#222;border-color:rgba(0,0,0,0.1)}
+body.light-theme .code-editor-container .code-line-numbers{background:rgba(0,0,0,0.04);color:#888}
+
+/* ============================================================
+   ШАХМАТЫ
+   ============================================================ */
+.chess-container{display:flex;flex-direction:column;align-items:center;padding:8px}
+.chess-container .chess-board{display:grid;grid-template-columns:repeat(8,1fr);gap:0;width:400px;height:400px;border:2px solid var(--border-light);border-radius:4px;overflow:hidden}
+.chess-container .chess-cell{display:flex;align-items:center;justify-content:center;font-size:32px;cursor:pointer;transition:background .15s;width:50px;height:50px}
+.chess-container .chess-cell.light{background:#f0d9b5}
+.chess-container .chess-cell.dark{background:#b58863}
+.chess-container .chess-cell.selected{background:#7fc97f!important}
+.chess-container .chess-cell.valid{background:rgba(0,255,0,0.3)!important;cursor:pointer}
+.chess-container .chess-cell.valid::after{content:'';width:12px;height:12px;background:rgba(0,0,0,0.3);border-radius:50%;position:absolute}
+.chess-container .chess-status{color:var(--text-primary);font-size:16px;margin:8px 0;text-align:center}
+.chess-container .chess-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.chess-container .chess-controls button{padding:4px 16px;background:var(--accent);color:#fff;border-radius:4px;transition:background .2s}
+.chess-container .chess-controls button:hover{background:var(--accent-hover)}
+@media(max-width:500px){.chess-container .chess-board{width:300px;height:300px}.chess-container .chess-cell{width:37.5px;height:37.5px;font-size:24px}}
+
+/* ============================================================
+   КРЕСТИКИ-НОЛИКИ
+   ============================================================ */
+.tic-container{display:flex;flex-direction:column;align-items:center;padding:8px}
+.tic-container .tic-board{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;width:300px;height:300px;background:var(--border-light);border-radius:8px;overflow:hidden}
+.tic-container .tic-cell{background:var(--bg-window);display:flex;align-items:center;justify-content:center;font-size:60px;color:var(--text-primary);cursor:pointer;transition:background .15s}
+.tic-container .tic-cell:hover{background:var(--bg-hover)}
+.tic-container .tic-cell.win{background:rgba(0,255,0,0.2)}
+.tic-container .tic-status{color:var(--text-primary);font-size:18px;margin:10px 0;text-align:center}
+.tic-container .tic-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.tic-container .tic-controls select,.tic-container .tic-controls button{padding:4px 12px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);font-size:14px;transition:all .2s}
+.tic-container .tic-controls button{background:var(--accent);color:#fff;border:none}
+.tic-container .tic-controls button:hover{background:var(--accent-hover)}
+@media(max-width:400px){.tic-container .tic-board{width:240px;height:240px}.tic-container .tic-cell{font-size:48px}}
+
+/* ============================================================
+   AI ART ГЕНЕРАТОР
+   ============================================================ */
+.art-container{padding:8px}
+.art-container .art-input-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.art-container .art-input-row input{flex:1;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);outline:none;font-size:14px;min-width:150px}
+.art-container .art-input-row input:focus{border-color:var(--accent)}
+.art-container .art-input-row button{padding:6px 20px;background:var(--accent);color:#fff;border-radius:4px;transition:background .2s}
+.art-container .art-input-row button:hover{background:var(--accent-hover)}
+.art-container .art-result{text-align:center;margin-top:10px}
+.art-container .art-result img{max-width:100%;max-height:400px;border-radius:8px;border:1px solid var(--border-light)}
+.art-container .art-result .art-placeholder{color:var(--text-secondary);font-size:16px;padding:40px;background:rgba(255,255,255,0.03);border-radius:8px}
+
+/* ============================================================
+   ПЕРЕВОДЧИК
+   ============================================================ */
+.translate-container{padding:8px}
+.translate-container .translate-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.translate-container .translate-row select,.translate-container .translate-row textarea{flex:1;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);outline:none;font-size:14px;min-width:100px}
+.translate-container .translate-row select:focus,.translate-container .translate-row textarea:focus{border-color:var(--accent)}
+.translate-container .translate-row textarea{min-height:80px;resize:vertical}
+.translate-container .translate-row button{padding:6px 20px;background:var(--accent);color:#fff;border-radius:4px;transition:background .2s}
+.translate-container .translate-row button:hover{background:var(--accent-hover)}
+.translate-container .translate-result{background:rgba(255,255,255,0.03);border-radius:8px;padding:12px;margin-top:8px;color:var(--text-primary);font-size:14px;min-height:60px}
+body.light-theme .translate-container .translate-row select,body.light-theme .translate-container .translate-row textarea{background:rgba(0,0,0,0.05);color:#222;border-color:rgba(0,0,0,0.1)}
+
+/* ============================================================
+   ВИКИПЕДИЯ
+   ============================================================ */
+.wiki-container{padding:8px}
+.wiki-container .wiki-search-row{display:flex;gap:8px;margin-bottom:10px}
+.wiki-container .wiki-search-row input{flex:1;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);outline:none;font-size:14px}
+.wiki-container .wiki-search-row input:focus{border-color:var(--accent)}
+.wiki-container .wiki-search-row button{padding:6px 20px;background:var(--accent);color:#fff;border-radius:4px;transition:background .2s}
+.wiki-container .wiki-search-row button:hover{background:var(--accent-hover)}
+.wiki-container .wiki-result{padding:8px;background:rgba(255,255,255,0.03);border-radius:8px;max-height:300px;overflow-y:auto}
+.wiki-container .wiki-result h2{color:var(--text-primary);margin-bottom:8px}
+.wiki-container .wiki-result p{color:var(--text-secondary);line-height:1.6;font-size:14px}
+.wiki-container .wiki-result .wiki-placeholder{color:var(--text-secondary);text-align:center;padding:30px}
+body.light-theme .wiki-container .wiki-search-row input{background:rgba(0,0,0,0.05);color:#222;border-color:rgba(0,0,0,0.1)}
+
+/* ============================================================
+   КУРСЫ ВАЛЮТ
+   ============================================================ */
+.currency-container{padding:8px}
+.currency-container .currency-table{width:100%;border-collapse:collapse;margin-top:8px}
+.currency-container .currency-table th,.currency-container .currency-table td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--border-light);color:var(--text-primary);font-size:13px}
+.currency-container .currency-table th{color:var(--text-secondary);font-weight:500;font-size:12px;text-transform:uppercase}
+.currency-container .currency-table tr:hover td{background:var(--bg-hover)}
+.currency-container .currency-update{text-align:center;color:var(--text-secondary);font-size:12px;margin-top:8px}
+.currency-container .currency-graph{margin-top:12px;height:150px;background:rgba(255,255,255,0.03);border-radius:8px;position:relative;overflow:hidden}
+.currency-container .currency-graph canvas{width:100%;height:100%}
+.currency-container .currency-controls{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.currency-container .currency-controls select,.currency-container .currency-controls button{padding:4px 12px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);font-size:13px;outline:none}
+.currency-container .currency-controls button{background:var(--accent);color:#fff;border:none;transition:background .2s}
+.currency-container .currency-controls button:hover{background:var(--accent-hover)}
+body.light-theme .currency-container .currency-controls select{background:rgba(0,0,0,0.05);color:#222;border-color:rgba(0,0,0,0.1)}
 
 /* ============================================================
    АДАПТИВ
@@ -488,4 +643,6 @@ body.light-theme .weather-full .weather-detail{background:rgba(0,0,0,0.02)}
   .weather-full .weather-map{grid-column:span 1;height:150px}
   .weather-search{grid-column:span 1;flex-wrap:wrap}
   .store-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .chess-container .chess-board{width:280px;height:280px}
+  .chess-container .chess-cell{width:35px;height:35px;font-size:20px}
 }
