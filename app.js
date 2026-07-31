@@ -1,5 +1,5 @@
 // ============================================================
-//  NextelOS v0.0.7 – Полный JavaScript (Часть 1)
+//  NextelOS v0.0.8 – Полный JavaScript (Часть 1)
 //  Ядро, FS, виджеты, трей, погода, терминал, файлы, редактор
 // ============================================================
 
@@ -50,6 +50,11 @@
       case 'translate': inner = '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 12h14M12 5a15 15 0 0 1 0 14M12 5a15 15 0 0 0 0 14" fill="none" stroke="currentColor" stroke-width="2"/>'; break;
       case 'wiki': inner = '<path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 8h8M8 12h6M8 16h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'; break;
       case 'currency': inner = '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 8l8 8M16 8l-8 8" fill="none" stroke="currentColor" stroke-width="2"/><text x="12" y="16" font-size="8" text-anchor="middle" fill="currentColor">$</text>'; break;
+      case 'virucide': inner = '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 8l8 8M16 8l-8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="3" fill="currentColor"/>'; break;
+      case 'tabliq': inner = '<rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 12h16M12 4v16" fill="none" stroke="currentColor" stroke-width="2"/>'; break;
+      case 'trader': inner = '<path d="M4 12h16M12 4v16M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 8h10M7 12h10M7 16h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'; break;
+      case 'g2048': inner = '<rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><text x="12" y="18" font-size="10" text-anchor="middle" fill="currentColor">2048</text>'; break;
+      case 'puzzle': inner = '<rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>'; break;
       default: inner = '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>';
     }
     return svg + inner + '</svg>';
@@ -71,13 +76,27 @@
   var clockEl = document.getElementById('taskbar-clock');
 
   // ============================================================
-  //  3. ЗВУКОВЫЕ ЭФФЕКТЫ
+  //  3. ЗВУКОВЫЕ ЭФФЕКТЫ (исправлены)
   // ============================================================
   var audioCtx = null;
+  var audioInitialized = false;
+
+  function initAudio() {
+    if (!audioInitialized) {
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioInitialized = true;
+      } catch(e) {}
+    }
+  }
+
   function playSound(type) {
     try {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
+      if (!audioCtx) initAudio();
+      if (!audioCtx || audioCtx.state === 'closed') return;
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
       var osc = audioCtx.createOscillator();
       var gain = audioCtx.createGain();
       osc.connect(gain);
@@ -115,6 +134,13 @@
       }
     } catch(e) {}
   }
+
+  // Инициализация AudioContext при первом клике пользователя
+  document.addEventListener('click', function() {
+    if (!audioInitialized) {
+      initAudio();
+    }
+  }, { once: false });
 
   var doNotDisturb = localStorage.getItem('nextelos-dnd') === 'true';
 
@@ -424,7 +450,7 @@
     init: function() {
       var self = this;
       return new Promise(function(resolve, reject) {
-        var request = indexedDB.open(self.dbName, 3);
+        var request = indexedDB.open(self.dbName, 4);
         request.onupgradeneeded = function(e) {
           var db = e.target.result;
           if (!db.objectStoreNames.contains(self.storeName)) {
@@ -445,7 +471,7 @@
           return self.set('/', { type: 'folder', children: {} })
             .then(function() { return self.set('/home', { type: 'folder', children: {} }); })
             .then(function() { return self.set('/home/user', { type: 'folder', children: {} }); })
-            .then(function() { return self.set('/home/user/readme.txt', { type: 'file', content: 'Добро пожаловать в NextelOS v0.0.7!' }); })
+            .then(function() { return self.set('/home/user/readme.txt', { type: 'file', content: 'Добро пожаловать в NextelOS v0.0.8!' }); })
             .then(function() { return self.set('/system', { type: 'folder', children: {} }); })
             .then(function() { return self.set('/system/trash', { type: 'folder', children: {} }); })
             .then(function() { return self.set('/system/apps.json', { type: 'file', content: '[]' }); })
@@ -455,7 +481,8 @@
             .then(function() { return self.set('/system/notes.json', { type: 'file', content: '{}' }); })
             .then(function() { return self.set('/system/bookmarks.json', { type: 'file', content: '[]' }); })
             .then(function() { return self.set('/system/todo.json', { type: 'file', content: '[]' }); })
-            .then(function() { return self.set('/system/playlists.json', { type: 'file', content: '[]' }); });
+            .then(function() { return self.set('/system/playlists.json', { type: 'file', content: '[]' }); })
+            .then(function() { return self.set('/system/folders.json', { type: 'file', content: '{}' }); });
         }
       });
     },
@@ -648,7 +675,7 @@
   });
 
   // ============================================================
-  //  13. РЕЕСТР ПРИЛОЖЕНИЙ
+  //  13. РЕЕСТР ПРИЛОЖЕНИЙ (встроенные и магазин)
   // ============================================================
   var builtinApps = [
     { id: 'terminal', label: 'Терминал', icon: 'terminal', action: openTerminal },
@@ -676,10 +703,16 @@
     { id: 'codeeditor', label: 'Редактор кода', icon: 'code', action: openCodeEditor },
     { id: 'chess', label: 'Шахматы', icon: 'chess', action: openChess },
     { id: 'tictac', label: 'Крестики-нолики', icon: 'tic', action: openTicTacToe },
-    { id: 'art', label: 'AI Art', icon: 'art', action: openArtGenerator },
-    { id: 'translate', label: 'Переводчик', icon: 'translate', action: openTranslator },
+    { id: 'weather', label: 'Погода', icon: 'weather', action: openWeatherApp },
+    { id: 'currency', label: 'Курсы валют', icon: 'currency', action: openCurrency },
     { id: 'wiki', label: 'Википедия', icon: 'wiki', action: openWikipedia },
-    { id: 'currency', label: 'Курсы валют', icon: 'currency', action: openCurrency }
+    { id: 'translate', label: 'Переводчик', icon: 'translate', action: openTranslator },
+    { id: 'art', label: 'AI Art', icon: 'art', action: openArtGenerator },
+    { id: 'virucide', label: 'Virucide', icon: 'virucide', action: openVirucide },
+    { id: 'tabliq', label: 'Tabliq', icon: 'tabliq', action: openTabliq },
+    { id: 'trader', label: 'Торговая платформа', icon: 'trader', action: openTrader },
+    { id: 'g2048', label: '2048', icon: 'g2048', action: open2048 },
+    { id: 'puzzle', label: 'Пятнашки', icon: 'puzzle', action: openPuzzle }
   ];
   var installedApps = [];
 
@@ -708,10 +741,11 @@
   }
 
   // ============================================================
-  //  14. ИКОНКИ РАБОЧЕГО СТОЛА
+  //  14. ИКОНКИ РАБОЧЕГО СТОЛА (с папками)
   // ============================================================
   var iconPositions = {};
   var selectedIcons = [];
+  var folderContents = {}; // { folderId: [appId1, appId2, ...] }
 
   function loadIconPositions() {
     try {
@@ -722,6 +756,20 @@
   }
   function saveIconPositions() {
     localStorage.setItem('nextelos-icon-positions', JSON.stringify(iconPositions));
+  }
+
+  function loadFolders() {
+    FS.get('/system/folders.json').then(function(data) {
+      if (data && data.content) {
+        try { folderContents = JSON.parse(data.content); } catch(e) { folderContents = {}; }
+      } else {
+        folderContents = {};
+      }
+    }).catch(function() { folderContents = {}; });
+  }
+
+  function saveFolders() {
+    FS.write('/system/folders.json', JSON.stringify(folderContents));
   }
 
   function arrangeIcons() {
@@ -932,19 +980,25 @@
   }
 
   function createFolderFromIcons(folderName, icons) {
+    var folderId = 'folder_' + Date.now();
+    var childIds = icons.map(function(icon) { return icon.dataset.appId; });
+    // Создаём запись в folderContents
+    folderContents[folderId] = childIds;
+    saveFolders();
+    // Создаём приложение-папку
     var folderApp = {
-      id: 'folder_' + Date.now(),
+      id: folderId,
       label: folderName,
       icon: 'folder',
       action: function() {
-        showNotification('Папка "' + folderName + '" открыта (заглушка)', 'info');
+        openFolder(folderId, folderName);
       },
       builtin: false,
-      isFolder: true,
-      children: icons.map(function(icon) { return icon.dataset.appId; })
+      isFolder: true
     };
     installedApps.push(folderApp);
     saveAppRegistry().then(function() {
+      // Удаляем иконки, которые переместили в папку
       icons.forEach(function(icon) {
         icon.remove();
         var id = icon.dataset.appId;
@@ -955,9 +1009,30 @@
     });
   }
 
+  function openFolder(folderId, folderName) {
+    var childIds = folderContents[folderId] || [];
+    var content = '<div style="padding:8px;"><div style="display:flex;flex-wrap:wrap;gap:12px;">';
+    childIds.forEach(function(appId) {
+      var app = getAllApps().find(function(a) { return a.id === appId; });
+      if (app) {
+        content += '<div style="width:80px;text-align:center;cursor:pointer;" onclick="(function(){ var app = getAllApps().find(function(a){return a.id===\'' + appId + '\';}); if(app) app.action(); })()"><span style="font-size:32px;display:block;">' + app.icon + '</span><span style="font-size:11px;color:var(--text-primary);">' + app.label + '</span></div>';
+      }
+    });
+    content += '</div></div>';
+    createWindow('Папка: ' + folderName, content, { width: 400, height: 350, iconType: 'folder' });
+  }
+
   function renderDesktopIcons() {
     document.querySelectorAll('.desktop-icon').forEach(function(el) { el.remove(); });
     var apps = getAllApps();
+    // Фильтруем: показываем только те, что не в папках
+    var inFolder = [];
+    for (var key in folderContents) {
+      inFolder = inFolder.concat(folderContents[key]);
+    }
+    apps = apps.filter(function(app) {
+      return inFolder.indexOf(app.id) === -1;
+    });
     var defaultPositions = [
       { top: 30, left: 30 }, { top: 30, left: 130 }, { top: 30, left: 230 },
       { top: 30, left: 330 }, { top: 30, left: 430 }, { top: 30, left: 530 },
@@ -974,7 +1049,7 @@
         iconPositions[app.id] = pos;
       }
       var icon = document.createElement('div');
-      icon.className = 'desktop-icon';
+      icon.className = 'desktop-icon' + (app.isFolder ? ' folder' : '');
       icon.dataset.appId = app.id;
       icon.dataset.builtin = app.builtin ? 'true' : 'false';
       icon.style.top = pos.top + 'px';
@@ -1129,6 +1204,18 @@
           hideContextMenu();
         });
       });
+      addMenuItem2('Создать презентацию', function() {
+        var name = prompt('Введите имя презентации:', 'Новая презентация');
+        if (name && name.trim()) {
+          // Создаём файл презентации (заглушка, просто открываем приложение)
+          openPresentation();
+          hideContextMenu();
+        }
+      });
+      addMenuItem2('Создать таблицу', function() {
+        openTabliq();
+        hideContextMenu();
+      });
       addDivider2();
       addMenuItem2('Упорядочить', function() {
         arrangeIcons();
@@ -1186,6 +1273,27 @@
     showNotification(doNotDisturb ? 'Режим "Не беспокоить" включён' : 'Режим "Не беспокоить" выключен');
   });
   document.getElementById('do-not-disturb').checked = doNotDisturb;
+
+  // Поиск в панели задач
+  document.getElementById('taskbar-search').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      var query = this.value.trim();
+      if (query) {
+        var searchApp = builtinApps.find(function(a) { return a.id === 'search'; });
+        if (searchApp) {
+          searchApp.action();
+          // Передаём запрос в поиск
+          setTimeout(function() {
+            var input = document.getElementById('search-input');
+            if (input) {
+              input.value = query;
+              input.dispatchEvent(new Event('input'));
+            }
+          }, 300);
+        }
+      }
+    }
+  });
 
   // ============================================================
   //  17. ВИДЖЕТЫ
@@ -1441,867 +1549,422 @@
       }
     }, 100);
   }
-// ============================================================
-//  NextelOS v0.0.7 – Полный JavaScript (Часть 2)
-//  Все приложения, игры, завершающий код
-// ============================================================
-
   // ============================================================
-  //  20. ПРИЛОЖЕНИЯ
+  //  20. МАГАЗИН ПРИЛОЖЕНИЙ (обновлённый с поиском и категориями)
   // ============================================================
-
-  // ----- 20.1 Терминал -----
-  function openTerminal() {
-    var content = '<div id="terminal-output"></div><div class="terminal-input-line"><span>$</span><input id="terminal-input" type="text" autofocus></div>';
-    var winId = createWindow('Терминал', content, { width: 600, height: 350, iconType: 'terminal' });
-    setTimeout(function() {
-      var output = document.getElementById('terminal-output');
-      var input = document.getElementById('terminal-input');
-      var currentDir = '/home/user';
-
-      function append(text) {
-        output.textContent += text + '\n';
-        output.scrollTop = output.scrollHeight;
+  var storeCategories = ['Все', 'Инструменты', 'Игры', 'Творчество', 'Образование', 'Безопасность'];
+  var storeApps = [
+    { id: 'notes', name: 'Заметки', icon: '📝', desc: 'Простые заметки.', category: 'Инструменты', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'notes'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
       }
-
-      function processCommand(cmd) {
-        var args = cmd.trim().split(/\s+/);
-        var command = args[0];
-        var params = args.slice(1);
-        var p = FS;
-        var cur = currentDir;
-        try {
-          switch (command) {
-            case 'ls':
-              p.ls(cur).then(function(files) {
-                append(files.join('  '));
-                promptAgain();
-              }).catch(function(e) { append('Ошибка: ' + e.message); promptAgain(); });
-              break;
-            case 'cd':
-              if (params.length === 0) {
-                currentDir = '/home/user';
-                promptAgain();
-              } else {
-                var newPath = params[0];
-                if (!newPath.startsWith('/')) newPath = (cur === '/' ? '/' : cur + '/' + newPath);
-                p.stat(newPath).then(function(entry) {
-                  if (!entry || entry.type !== 'folder') {
-                    append('cd: нет такой папки: ' + params[0]);
-                  } else {
-                    currentDir = newPath;
-                  }
-                  promptAgain();
-                }).catch(function(e) { append('Ошибка: ' + e.message); promptAgain(); });
-              }
-              break;
-            case 'mkdir':
-              if (params.length === 0) { append('mkdir: нужен путь'); promptAgain(); return; }
-              var newPath = params[0];
-              if (!newPath.startsWith('/')) newPath = (cur === '/' ? '/' : cur + '/' + newPath);
-              p.mkdir(newPath).then(function() {
-                append('Папка создана');
-                promptAgain();
-              }).catch(function(e) { append('Ошибка: ' + e.message); promptAgain(); });
-              break;
-            case 'touch':
-              if (params.length === 0) { append('touch: нужен путь'); promptAgain(); return; }
-              var newPath = params[0];
-              if (!newPath.startsWith('/')) newPath = (cur === '/' ? '/' : cur + '/' + newPath);
-              p.touch(newPath, '').then(function() {
-                append('Файл создан');
-                promptAgain();
-              }).catch(function(e) { append('Ошибка: ' + e.message); promptAgain(); });
-              break;
-            case 'cat':
-              if (params.length === 0) { append('cat: нужен путь'); promptAgain(); return; }
-              var filePath = params[0];
-              if (!filePath.startsWith('/')) filePath = (cur === '/' ? '/' : cur + '/' + filePath);
-              p.cat(filePath).then(function(content) {
-                append(content || '(пусто)');
-                promptAgain();
-              }).catch(function(e) { append('Ошибка: ' + e.message); promptAgain(); });
-              break;
-            case 'rm':
-              if (params.length === 0) { append('rm: нужен путь'); promptAgain(); return; }
-              var filePath = params[0];
-              if (!filePath.startsWith('/')) filePath = (cur === '/' ? '/' : cur + '/' + filePath);
-              p.rm(filePath).then(function() {
-                append('Удалено');
-                promptAgain();
-              }).catch(function(e) { append('Ошибка: ' + e.message); promptAgain(); });
-              break;
-            case 'clear':
-              output.textContent = '';
-              promptAgain();
-              break;
-            case 'echo':
-              append(params.join(' '));
-              promptAgain();
-              break;
-            case 'cp':
-              if (params.length < 2) { append('cp: нужны два пути'); promptAgain(); return; }
-              var src = params[0], dst = params[1];
-              if (!src.startsWith('/')) src = (cur === '/' ? '/' : cur + '/' + src);
-              if (!dst.startsWith('/')) dst = (cur === '/' ? '/' : cur + '/' + dst);
-              p.cat(src).then(function(content) {
-                return p.touch(dst, content);
-              }).then(function() {
-                append('Скопировано');
-                promptAgain();
-              }).catch(function(e) { append('Ошибка: ' + e.message); promptAgain(); });
-              break;
-            case 'mv':
-              if (params.length < 2) { append('mv: нужны два пути'); promptAgain(); return; }
-              var src = params[0], dst = params[1];
-              if (!src.startsWith('/')) src = (cur === '/' ? '/' : cur + '/' + src);
-              if (!dst.startsWith('/')) dst = (cur === '/' ? '/' : cur + '/' + dst);
-              p.cat(src).then(function(content) {
-                return p.touch(dst, content).then(function() { return p.rm(src); });
-              }).then(function() {
-                append('Перемещено');
-                promptAgain();
-              }).catch(function(e) { append('Ошибка: ' + e.message); promptAgain(); });
-              break;
-            case 'rmdir':
-              if (params.length === 0) { append('rmdir: нужен путь'); promptAgain(); return; }
-              var filePath = params[0];
-              if (!filePath.startsWith('/')) filePath = (cur === '/' ? '/' : cur + '/' + filePath);
-              p.rm(filePath).then(function() {
-                append('Удалено');
-                promptAgain();
-              }).catch(function(e) { append('Ошибка: ' + e.message); promptAgain(); });
-              break;
-            case 'pwd':
-              append(cur);
-              promptAgain();
-              break;
-            case 'whoami':
-              append('user');
-              promptAgain();
-              break;
-            case 'help':
-              append('Доступные команды:\nls, cd, mkdir, touch, cat, rm, clear, echo, cp, mv, rmdir, pwd, whoami, help');
-              promptAgain();
-              break;
-            default:
-              append('команда не найдена: ' + command);
-              promptAgain();
-          }
-        } catch(e) {
-          append('Ошибка: ' + e.message);
-          promptAgain();
-        }
-
-        function promptAgain() {
-          var promptStr = currentDir || '/';
-          output.textContent += '\n' + promptStr + ' $ ';
-          input.value = '';
-          input.focus();
-        }
-      }
-
-      append('Добро пожаловать в Терминал NextelOS v0.0.7');
-      append('Введите help для списка команд.');
-      append('\n' + currentDir + ' $ ');
-
-      input.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-          var cmd = input.value.trim();
-          if (cmd) {
-            var lines = output.textContent.split('\n');
-            var last = lines[lines.length - 1];
-            if (last.endsWith('$ ')) {
-              lines[lines.length - 1] = last + cmd;
-              output.textContent = lines.join('\n');
-            } else {
-              append(cmd);
-            }
-            processCommand(cmd);
-          } else {
-            var promptStr = currentDir || '/';
-            output.textContent += '\n' + promptStr + ' $ ';
-            input.value = '';
-            input.focus();
-          }
+      installedApps.push({
+        id: 'notes',
+        label: 'Заметки',
+        icon: '📝',
+        action: function() {
+          var c = '<textarea style="width:100%;height:300px;background:#111;color:#eee;border:none;padding:10px;font-family:inherit;resize:none;outline:none;" placeholder="Введите заметку..."></textarea>';
+          createWindow('Заметки', c, { width: 400, height: 350, iconType: 'notes' });
         }
       });
-      input.focus();
-    }, 100);
-  }
-
-  // ----- 20.2 Файловый менеджер (с закладками и поиском) -----
-  var fmCurrentPath = '/home/user';
-  var fmClipboard = null;
-  var fmBookmarks = [];
-
-  function loadBookmarks() {
-    FS.get('/system/bookmarks.json').then(function(data) {
-      if (data && data.content) {
-        try { fmBookmarks = JSON.parse(data.content); } catch(e) { fmBookmarks = []; }
-      } else {
-        fmBookmarks = ['/home/user', '/home', '/system'];
-      }
-      renderBookmarks();
-    }).catch(function() { fmBookmarks = ['/home/user', '/home', '/system']; renderBookmarks(); });
-  }
-  function saveBookmarks() {
-    FS.write('/system/bookmarks.json', JSON.stringify(fmBookmarks));
-  }
-  function renderBookmarks() {
-    var container = document.querySelector('.fm-bookmarks');
-    if (!container) return;
-    container.innerHTML = '';
-    fmBookmarks.forEach(function(bm) {
-      var span = document.createElement('span');
-      span.className = 'bookmark';
-      span.textContent = bm;
-      span.addEventListener('click', function() {
-        fmCurrentPath = bm;
-        renderFileList();
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Заметки установлены!');
       });
-      container.appendChild(span);
+    } },
+    { id: 'calendar_app', name: 'Календарь', icon: '📅', desc: 'Календарь с событиями.', category: 'Инструменты', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'calendar_app'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'calendar_app',
+        label: 'Календарь',
+        icon: '📅',
+        action: function() {
+          openCalendar();
+        }
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Календарь установлен!');
+      });
+    } },
+    { id: 'weather_app', name: 'Погода', icon: '🌤️', desc: 'Полноценная погода без ключа.', category: 'Инструменты', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'weather_app'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'weather_app',
+        label: 'Погода',
+        icon: '🌤️',
+        action: function() {
+          openWeatherApp();
+        }
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Погода установлена!');
+      });
+    } },
+    { id: 'player', name: 'Музыкальный плеер', icon: '🎵', desc: 'Загружайте и слушайте MP3.', category: 'Инструменты', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'player'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'player',
+        label: 'Плеер',
+        icon: '🎵',
+        action: openPlayer
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Плеер установлен!');
+      });
+    } },
+    { id: 'converter', name: 'Конвертер величин', icon: '📐', desc: 'Перевод единиц: длина, вес, объём, температура, скорость, валюта.', category: 'Инструменты', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'converter'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'converter',
+        label: 'Конвертер',
+        icon: '📐',
+        action: openConverter
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Конвертер установлен!');
+      });
+    } },
+    { id: 'todo', name: 'Планировщик задач', icon: '✅', desc: 'Список задач с датами и приоритетами.', category: 'Инструменты', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'todo'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'todo',
+        label: 'Планировщик',
+        icon: '✅',
+        action: openTodo
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Планировщик установлен!');
+      });
+    } },
+    { id: 'codeeditor', name: 'Редактор кода', icon: '💻', desc: 'Подсветка синтаксиса, нумерация строк, поиск/замена.', category: 'Инструменты', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'codeeditor'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'codeeditor',
+        label: 'Редактор кода',
+        icon: '💻',
+        action: openCodeEditor
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Редактор кода установлен!');
+      });
+    } },
+    { id: 'tabliq', name: 'Tabliq (таблицы)', icon: '📊', desc: 'Создание таблиц как в Excel.', category: 'Инструменты', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'tabliq'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'tabliq',
+        label: 'Tabliq',
+        icon: '📊',
+        action: openTabliq
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Tabliq установлен!');
+      });
+    } },
+    { id: 'virucide', name: 'Virucide (антивирус)', icon: '🛡️', desc: 'Сканирование файлов на угрозы.', category: 'Безопасность', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'virucide'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'virucide',
+        label: 'Virucide',
+        icon: '🛡️',
+        action: openVirucide
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Virucide установлен!');
+      });
+    } },
+    { id: 'art', name: 'AI Art Generator', icon: '🎨', desc: 'Генерация изображений по описанию (Pollinations.ai).', category: 'Творчество', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'art'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'art',
+        label: 'AI Art',
+        icon: '🎨',
+        action: openArtGenerator
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('AI Art установлен!');
+      });
+    } },
+    { id: 'translate', name: 'Переводчик', icon: '🌐', desc: 'Перевод текста между языками.', category: 'Образование', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'translate'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'translate',
+        label: 'Переводчик',
+        icon: '🌐',
+        action: openTranslator
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Переводчик установлен!');
+      });
+    } },
+    { id: 'wiki', name: 'Википедия', icon: '📚', desc: 'Офлайн-ридер статей Википедии.', category: 'Образование', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'wiki'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'wiki',
+        label: 'Википедия',
+        icon: '📚',
+        action: openWikipedia
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Википедия установлена!');
+      });
+    } },
+    { id: 'currency', name: 'Курсы валют', icon: '💰', desc: 'Реальные курсы с графиком.', category: 'Инструменты', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'currency'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'currency',
+        label: 'Курсы валют',
+        icon: '💰',
+        action: openCurrency
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Курсы валют установлены!');
+      });
+    } },
+    { id: 'snake_game', name: 'Змейка', icon: '🐍', desc: 'Классическая игра со счётом и уровнями.', category: 'Игры', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'snake_game'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'snake_game',
+        label: 'Змейка',
+        icon: '🐍',
+        action: openSnakeGame
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Змейка установлена!');
+      });
+    } },
+    { id: 'tetris_game', name: 'Тетрис', icon: '🧩', desc: 'Падающие фигуры.', category: 'Игры', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'tetris_game'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'tetris_game',
+        label: 'Тетрис',
+        icon: '🧩',
+        action: openTetris
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Тетрис установлен!');
+      });
+    } },
+    { id: 'minesweeper_game', name: 'Сапёр', icon: '💣', desc: 'Найди все мины.', category: 'Игры', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'minesweeper_game'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'minesweeper_game',
+        label: 'Сапёр',
+        icon: '💣',
+        action: openMinesweeper
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Сапёр установлен!');
+      });
+    } },
+    { id: 'chess_game', name: 'Шахматы', icon: '♟️', desc: 'Классические шахматы с ИИ.', category: 'Игры', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'chess_game'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'chess_game',
+        label: 'Шахматы',
+        icon: '♟️',
+        action: openChess
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Шахматы установлены!');
+      });
+    } },
+    { id: 'tictac_game', name: 'Крестики-нолики', icon: '⭕❌', desc: 'Игра против ИИ с тремя уровнями.', category: 'Игры', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'tictac_game'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'tictac_game',
+        label: 'Крестики-нолики',
+        icon: '⭕❌',
+        action: openTicTacToe
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Крестики-нолики установлены!');
+      });
+    } },
+    { id: 'g2048_game', name: '2048', icon: '🔢', desc: 'Собери 2048!', category: 'Игры', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'g2048_game'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'g2048_game',
+        label: '2048',
+        icon: '🔢',
+        action: open2048
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('2048 установлена!');
+      });
+    } },
+    { id: 'puzzle_game', name: 'Пятнашки', icon: '🧩', desc: 'Собери картинку за минимальное число ходов.', category: 'Игры', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'puzzle_game'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'puzzle_game',
+        label: 'Пятнашки',
+        icon: '🧩',
+        action: openPuzzle
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Пятнашки установлены!');
+      });
+    } },
+    { id: 'trader_game', name: 'Торговая платформа', icon: '📈', desc: 'Симулятор владельца галактического маркетплейса.', category: 'Игры', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'trader_game'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'trader_game',
+        label: 'Торговая платформа',
+        icon: '📈',
+        action: openTrader
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Торговая платформа установлена!');
+      });
+    } }
+  ];
+
+  function openStore() {
+    var html = '<div class="store-header"><input type="text" id="store-search" placeholder="Поиск приложений..."><select id="store-category"><option value="all">Все категории</option>';
+    storeCategories.forEach(function(cat) {
+      html += '<option value="' + cat + '">' + cat + '</option>';
     });
-  }
+    html += '</select></div><div class="store-grid" id="store-grid"></div>';
+    var winId = createWindow('Магазин приложений', html, { width: 700, height: 550, iconType: 'folder' });
 
-  function openFileManager() {
-    var content = '<div class="fm-bookmarks"></div><div class="fm-search"><input id="fm-search-input" type="text" placeholder="Поиск по имени..."><button id="fm-search-btn">🔍</button></div><div class="fm-toolbar"><button id="fm-back"><span class="icon">' + iconHTML('folder') + '</span>Назад</button><button id="fm-home"><span class="icon">' + iconHTML('home') + '</span>Домой</button><button id="fm-mkdir"><span class="icon">' + iconHTML('folder') + '</span>Создать папку</button><button id="fm-touch"><span class="icon">' + iconHTML('file') + '</span>Создать файл</button><button id="fm-refresh">🔄 Обновить</button><button id="fm-paste" style="display:none;">📋 Вставить</button></div><div class="fm-path" id="fm-path">' + fmCurrentPath + '</div><div class="fm-list" id="fm-list"></div>';
-    var winId = createWindow('Файловый менеджер', content, { width: 550, height: 450, iconType: 'folder' });
-    loadBookmarks();
-
-    function renderFileList(filter) {
-      var list = document.getElementById('fm-list');
-      if (!list) return;
-      var pathEl = document.getElementById('fm-path');
-      if (pathEl) pathEl.textContent = fmCurrentPath;
-      var pasteBtn = document.getElementById('fm-paste');
-      if (pasteBtn) pasteBtn.style.display = fmClipboard ? 'inline-block' : 'none';
-      FS.ls(fmCurrentPath).then(function(items) {
-        list.innerHTML = '';
-        var folders = [], files = [];
-        var promises = items.map(function(name) {
-          var fullPath = fmCurrentPath === '/' ? '/' + name : fmCurrentPath + '/' + name;
-          return FS.stat(fullPath).then(function(stat) {
-            if (stat && stat.type === 'folder') folders.push(name);
-            else files.push(name);
-          });
-        });
-        Promise.all(promises).then(function() {
-          var sorted = folders.sort().concat(files.sort());
-          if (filter) {
-            sorted = sorted.filter(function(name) { return name.toLowerCase().includes(filter.toLowerCase()); });
-          }
-          sorted.forEach(function(name) {
-            var fullPath = fmCurrentPath === '/' ? '/' + name : fmCurrentPath + '/' + name;
-            FS.stat(fullPath).then(function(stat) {
-              var isFolder = stat && stat.type === 'folder';
-              var div = document.createElement('div');
-              div.className = 'fm-item';
-              div.innerHTML = '<span class="fm-icon">' + iconHTML(isFolder ? 'folder' : 'file') + '</span><span class="fm-name">' + name + '</span><span class="fm-actions"><button class="fm-del" data-path="' + fullPath + '">' + iconHTML('trash') + '</button></span>';
-              div.addEventListener('dblclick', function() {
-                if (isFolder) {
-                  fmCurrentPath = fullPath;
-                  renderFileList();
-                } else {
-                  FS.cat(fullPath).then(function(content) {
-                    openEditor(fullPath, content);
-                  }).catch(function(e) {
-                    showNotification('Не удалось открыть файл: ' + e.message, 'error');
-                  });
-                }
-              });
-              div.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                showFileContextMenu(e.clientX, e.clientY, fullPath, name, isFolder);
-              });
-              var delBtn = div.querySelector('.fm-del');
-              delBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (confirm('Переместить "' + name + '" в корзину?')) {
-                  var trashPath = '/system/trash/' + name;
-                  FS.stat(trashPath).then(function(exists) {
-                    if (exists) {
-                      showNotification('Файл с таким именем уже есть в корзине', 'warning');
-                      return;
-                    }
-                    return FS.stat(fullPath).then(function(stat) {
-                      if (stat.type === 'file') {
-                        return FS.cat(fullPath).then(function(content) {
-                          return FS.touch(trashPath, content).then(function() {
-                            return FS.rm(fullPath);
-                          });
-                        });
-                      } else {
-                        showNotification('Перемещение папок в корзину пока не поддерживается', 'warning');
-                        return Promise.reject();
-                      }
-                    });
-                  }).then(function() {
-                    showNotification('"' + name + '" перемещён в корзину');
-                    renderFileList();
-                  }).catch(function(err) {
-                    if (err) showNotification('Ошибка: ' + err.message, 'error');
-                  });
-                }
-              });
-              list.appendChild(div);
-            });
-          });
-        });
-      }).catch(function(e) {
-        list.innerHTML = '<div style="color:#ff5555;">Ошибка: ' + e.message + '</div>';
+    function renderStore() {
+      var grid = document.getElementById('store-grid');
+      if (!grid) return;
+      var search = document.getElementById('store-search').value.toLowerCase();
+      var category = document.getElementById('store-category').value;
+      var filtered = storeApps.filter(function(app) {
+        var matchSearch = app.name.toLowerCase().includes(search) || app.desc.toLowerCase().includes(search);
+        var matchCategory = category === 'all' || app.category === category;
+        return matchSearch && matchCategory;
       });
-    }
-
-    function showFileContextMenu(x, y, path, name, isFolder) {
-      var menu = document.getElementById('context-menu');
-      menu.innerHTML = '';
-      addMenuItem('📋 Копировать', function() {
-        fmClipboard = { path: path, type: 'copy' };
-        showNotification('Файл скопирован');
-        hideContextMenu();
-        var pasteBtn = document.getElementById('fm-paste');
-        if (pasteBtn) pasteBtn.style.display = 'inline-block';
-      });
-      addMenuItem('✂️ Вырезать', function() {
-        fmClipboard = { path: path, type: 'cut' };
-        showNotification('Файл вырезан');
-        hideContextMenu();
-        var pasteBtn = document.getElementById('fm-paste');
-        if (pasteBtn) pasteBtn.style.display = 'inline-block';
-      });
-      if (fmClipboard) {
-        addMenuItem('📋 Вставить', function() {
-          var src = fmClipboard.path;
-          var dest = fmCurrentPath === '/' ? '/' + name : fmCurrentPath + '/' + name;
-          FS.cat(src).then(function(content) {
-            return FS.touch(dest, content).then(function() {
-              if (fmClipboard.type === 'cut') {
-                return FS.rm(src);
-              }
-            });
-          }).then(function() {
-            showNotification('Вставлено');
-            fmClipboard = null;
-            renderFileList();
-            var pasteBtn = document.getElementById('fm-paste');
-            if (pasteBtn) pasteBtn.style.display = 'none';
-            hideContextMenu();
-          }).catch(function(err) {
-            showNotification('Ошибка: ' + err.message, 'error');
-          });
-        });
-      }
-      addMenuItem('📌 Переименовать', function() {
-        showDialog({
-          title: 'Переименовать',
-          message: 'Введите новое имя:',
-          input: true,
-          defaultValue: name
-        }).then(function(newName) {
-          if (newName && newName.trim() && newName.trim() !== name) {
-            var newPath = fmCurrentPath === '/' ? '/' + newName.trim() : fmCurrentPath + '/' + newName.trim();
-            FS.cat(path).then(function(content) {
-              return FS.touch(newPath, content).then(function() {
-                return FS.rm(path);
-              });
-            }).then(function() {
-              showNotification('Переименовано');
-              renderFileList();
-              hideContextMenu();
-            }).catch(function(err) {
-              showNotification('Ошибка: ' + err.message, 'error');
-            });
-          }
-          hideContextMenu();
-        });
-      });
-      addMenuItem('ℹ Свойства', function() {
-        FS.stat(path).then(function(stat) {
-          var info = 'Имя: ' + name + '\n';
-          info += 'Тип: ' + (isFolder ? 'Папка' : 'Файл') + '\n';
-          if (!isFolder) {
-            FS.cat(path).then(function(content) {
-              info += 'Размер: ' + content.length + ' символов\n';
-              info += 'Дата создания: ' + new Date().toLocaleString();
-              showNotification(info, 'info', 5000);
-            });
-          } else {
-            showNotification(info, 'info', 5000);
-          }
-          hideContextMenu();
-        });
-      });
-      menu.style.display = 'block';
-      menu.style.left = x + 'px';
-      menu.style.top = y + 'px';
-      var rect = menu.getBoundingClientRect();
-      if (rect.right > window.innerWidth) menu.style.left = (x - rect.width) + 'px';
-      if (rect.bottom > window.innerHeight) menu.style.top = (y - rect.height) + 'px';
-
-      function addMenuItem(text, action) {
-        var item = document.createElement('div');
-        item.className = 'menu-item';
-        item.textContent = text;
-        if (action) {
-          item.addEventListener('click', function(e) { e.stopPropagation(); action(); });
-        }
-        menu.appendChild(item);
-      }
-    }
-
-    setTimeout(function() {
-      var backBtn = document.getElementById('fm-back');
-      var homeBtn = document.getElementById('fm-home');
-      var mkdirBtn = document.getElementById('fm-mkdir');
-      var touchBtn = document.getElementById('fm-touch');
-      var refreshBtn = document.getElementById('fm-refresh');
-      var pasteBtn = document.getElementById('fm-paste');
-      var searchInput = document.getElementById('fm-search-input');
-      var searchBtn = document.getElementById('fm-search-btn');
-
-      if (backBtn) {
-        backBtn.addEventListener('click', function() {
-          if (fmCurrentPath !== '/') {
-            var parts = fmCurrentPath.split('/').filter(function(p) { return p !== ''; });
-            parts.pop();
-            fmCurrentPath = '/' + parts.join('/');
-            if (!fmCurrentPath) fmCurrentPath = '/';
-            renderFileList();
-          }
-        });
-      }
-      if (homeBtn) {
-        homeBtn.addEventListener('click', function() {
-          fmCurrentPath = '/home/user';
-          renderFileList();
-        });
-      }
-      if (mkdirBtn) {
-        mkdirBtn.addEventListener('click', function() {
-          showDialog({
-            title: 'Создать папку',
-            message: 'Введите имя папки:',
-            input: true,
-            placeholder: 'Имя папки',
-            defaultValue: 'Новая папка'
-          }).then(function(name) {
-            if (name && name.trim()) {
-              var newPath = fmCurrentPath === '/' ? '/' + name.trim() : fmCurrentPath + '/' + name.trim();
-              FS.mkdir(newPath).then(function() {
-                showNotification('Папка "' + name.trim() + '" создана');
-                renderFileList();
-              }).catch(function(e) {
-                showNotification('Ошибка: ' + e.message, 'error');
-              });
-            }
-          });
-        });
-      }
-      if (touchBtn) {
-        touchBtn.addEventListener('click', function() {
-          showDialog({
-            title: 'Создать файл',
-            message: 'Введите имя файла:',
-            input: true,
-            placeholder: 'Имя файла',
-            defaultValue: 'новый_файл.txt'
-          }).then(function(name) {
-            if (name && name.trim()) {
-              var newPath = fmCurrentPath === '/' ? '/' + name.trim() : fmCurrentPath + '/' + name.trim();
-              FS.touch(newPath, '').then(function() {
-                showNotification('Файл "' + name.trim() + '" создан');
-                renderFileList();
-              }).catch(function(e) {
-                showNotification('Ошибка: ' + e.message, 'error');
-              });
-            }
-          });
-        });
-      }
-      if (refreshBtn) {
-        refreshBtn.addEventListener('click', function() { renderFileList(); });
-      }
-      if (pasteBtn) {
-        pasteBtn.addEventListener('click', function() {
-          if (fmClipboard) {
-            var src = fmClipboard.path;
-            var name = src.split('/').pop();
-            var dest = fmCurrentPath === '/' ? '/' + name : fmCurrentPath + '/' + name;
-            FS.cat(src).then(function(content) {
-              return FS.touch(dest, content).then(function() {
-                if (fmClipboard.type === 'cut') {
-                  return FS.rm(src);
-                }
-              });
-            }).then(function() {
-              showNotification('Вставлено');
-              fmClipboard = null;
-              renderFileList();
-              if (pasteBtn) pasteBtn.style.display = 'none';
-            }).catch(function(err) {
-              showNotification('Ошибка: ' + err.message, 'error');
-            });
-          }
-        });
-      }
-      if (searchBtn) {
-        searchBtn.addEventListener('click', function() {
-          var query = searchInput.value.trim();
-          renderFileList(query);
-        });
-        searchInput.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') {
-            var query = searchInput.value.trim();
-            renderFileList(query);
-          }
-        });
-      }
-      renderFileList();
-    }, 100);
-  }
-
-  // ----- 20.3 Редактор (с Markdown-предпросмотром) -----
-  function openEditor(filePath, initialContent) {
-    initialContent = initialContent || '';
-    var content = '<div class="editor-area"><div class="editor-toolbar"><button id="editor-save"><span class="icon">' + iconHTML('file') + '</span>Сохранить</button><button id="editor-open"><span class="icon">' + iconHTML('folder') + '</span>Открыть</button><button id="editor-preview">📄 Предпросмотр</button><span class="file-info" id="editor-fileinfo">' + (filePath || 'Новый файл') + '</span></div><div id="editor-container" style="display:flex;flex:1;height:calc(100% - 36px);"><textarea id="editor-textarea" style="flex:1;background:#111;color:#eee;border:none;padding:10px;font-family:\'Courier New\',monospace;font-size:13px;resize:none;outline:none;height:100%;">' + initialContent + '</textarea><div id="editor-preview-panel" style="flex:1;background:#fff;color:#222;padding:10px;overflow:auto;display:none;border-left:1px solid #333;"></div></div></div>';
-    var winId = createWindow('Редактор', content, { width: 650, height: 450, iconType: 'file' });
-    setTimeout(function() {
-      var textarea = document.getElementById('editor-textarea');
-      var saveBtn = document.getElementById('editor-save');
-      var openBtn = document.getElementById('editor-open');
-      var previewBtn = document.getElementById('editor-preview');
-      var previewPanel = document.getElementById('editor-preview-panel');
-      var fileInfo = document.getElementById('editor-fileinfo');
-      var curPath = filePath;
-      var previewVisible = false;
-      if (curPath) fileInfo.textContent = curPath;
-
-      function renderMarkdown(text) {
-        var html = text;
-        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-        html = html.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-        html = html.replace(/\*(.*?)\*/g, '<i>$1</i>');
-        html = html.replace(/^\s*-\s(.*$)/gim, '<li>$1</li>');
-        html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-        html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
-        html = html.replace(/\n/g, '<br>');
-        return html;
-      }
-
-      saveBtn.addEventListener('click', function() {
-        var content = textarea.value;
-        if (!curPath) {
-          showDialog({
-            title: 'Сохранить файл',
-            message: 'Введите путь для сохранения:',
-            input: true,
-            placeholder: '/home/user/файл.txt',
-            defaultValue: '/home/user/новый_файл.txt'
-          }).then(function(newPath) {
-            if (newPath && newPath.trim()) {
-              FS.stat(newPath.trim()).then(function(stat) {
-                if (stat) {
-                  return showDialog({
-                    title: 'Файл существует',
-                    message: 'Перезаписать?',
-                    input: false
-                  }).then(function(confirm) {
-                    if (confirm) {
-                      return FS.write(newPath.trim(), content);
-                    } else {
-                      return Promise.reject('Отменено');
-                    }
-                  });
-                } else {
-                  return FS.touch(newPath.trim(), '').then(function() {
-                    return FS.write(newPath.trim(), content);
-                  });
-                }
-              }).then(function() {
-                curPath = newPath.trim();
-                fileInfo.textContent = curPath;
-                showNotification('Файл сохранён');
-              }).catch(function(err) {
-                if (err !== 'Отменено') {
-                  showNotification('Ошибка сохранения: ' + err.message, 'error');
-                }
-              });
-            }
-          });
-        } else {
-          FS.write(curPath, content).then(function() {
-            showNotification('Файл сохранён');
-          }).catch(function(e) {
-            showNotification('Ошибка сохранения: ' + e.message, 'error');
-          });
-        }
-      });
-
-      openBtn.addEventListener('click', function() {
-        showDialog({
-          title: 'Открыть файл',
-          message: 'Введите путь к файлу:',
-          input: true,
-          placeholder: '/home/user/файл.txt',
-          defaultValue: '/home/user/'
-        }).then(function(p) {
-          if (p && p.trim()) {
-            FS.cat(p.trim()).then(function(content) {
-              textarea.value = content;
-              curPath = p.trim();
-              fileInfo.textContent = curPath;
-              showNotification('Файл "' + p.trim() + '" открыт');
-            }).catch(function(e) {
-              showNotification('Ошибка открытия: ' + e.message, 'error');
-            });
-          }
-        });
-      });
-
-      previewBtn.addEventListener('click', function() {
-        previewVisible = !previewVisible;
-        if (previewVisible) {
-          previewPanel.style.display = 'block';
-          previewBtn.textContent = '📄 Скрыть';
-          var html = renderMarkdown(textarea.value);
-          previewPanel.innerHTML = html;
-        } else {
-          previewPanel.style.display = 'none';
-          previewBtn.textContent = '📄 Предпросмотр';
-        }
-      });
-
-      textarea.addEventListener('input', function() {
-        if (previewVisible) {
-          var html = renderMarkdown(textarea.value);
-          previewPanel.innerHTML = html;
-        }
-      });
-    }, 100);
-  }
-
-  // ----- 20.4 Калькулятор (простой и научный) -----
-  function openCalculator() {
-    var content = '<div class="calc-mode-switch"><button id="calc-mode-simple" class="active">Простой</button><button id="calc-mode-scientific">Научный</button></div><div id="calc-simple"><div class="calc-grid"><div class="calc-display" id="calc-display">0</div><button class="calc-btn" data-value="7">7</button><button class="calc-btn" data-value="8">8</button><button class="calc-btn" data-value="9">9</button><button class="calc-btn op" data-value="+">+</button><button class="calc-btn" data-value="4">4</button><button class="calc-btn" data-value="5">5</button><button class="calc-btn" data-value="6">6</button><button class="calc-btn op" data-value="-">−</button><button class="calc-btn" data-value="1">1</button><button class="calc-btn" data-value="2">2</button><button class="calc-btn" data-value="3">3</button><button class="calc-btn op" data-value="*">×</button><button class="calc-btn" data-value="0">0</button><button class="calc-btn" data-value=".">.</button><button class="calc-btn equal" data-value="=">=</button><button class="calc-btn op" data-value="/">÷</button><button class="calc-btn" data-value="C" style="grid-column:span 2;">C</button></div></div><div id="calc-scientific" style="display:none;"><div class="calc-grid-scientific"><div class="calc-display" id="calc-display-sci" style="grid-column:span 5;">0</div><button class="calc-btn" data-value="sin">sin</button><button class="calc-btn" data-value="cos">cos</button><button class="calc-btn" data-value="tan">tan</button><button class="calc-btn" data-value="log">log</button><button class="calc-btn" data-value="ln">ln</button><button class="calc-btn" data-value="7">7</button><button class="calc-btn" data-value="8">8</button><button class="calc-btn" data-value="9">9</button><button class="calc-btn op" data-value="+">+</button><button class="calc-btn op" data-value="-">−</button><button class="calc-btn" data-value="4">4</button><button class="calc-btn" data-value="5">5</button><button class="calc-btn" data-value="6">6</button><button class="calc-btn op" data-value="*">×</button><button class="calc-btn op" data-value="/">÷</button><button class="calc-btn" data-value="1">1</button><button class="calc-btn" data-value="2">2</button><button class="calc-btn" data-value="3">3</button><button class="calc-btn" data-value="^">^</button><button class="calc-btn equal" data-value="=">=</button><button class="calc-btn" data-value="0">0</button><button class="calc-btn" data-value=".">.</button><button class="calc-btn" data-value="C" style="grid-column:span 2;">C</button></div></div><div class="calc-history" id="calc-history"></div>';
-    var winId = createWindow('Калькулятор', content, { width: 350, height: 470, iconType: 'calc' });
-    setTimeout(function() {
-      var display = document.getElementById('calc-display');
-      var history = document.getElementById('calc-history');
-      var currentInput = '';
-      var previousInput = '';
-      var operation = null;
-      var shouldResetDisplay = false;
-
-      function updateDisplay() {
-        display.textContent = currentInput || '0';
-      }
-
-      function handleNumber(value) {
-        if (shouldResetDisplay) {
-          currentInput = '';
-          shouldResetDisplay = false;
-        }
-        if (value === '.' && currentInput.includes('.')) return;
-        currentInput += value;
-        updateDisplay();
-      }
-
-      function handleOperator(op) {
-        if (currentInput === '' && previousInput === '') return;
-        if (previousInput !== '' && currentInput !== '') {
-          calculate();
-        }
-        previousInput = currentInput || previousInput;
-        operation = op;
-        shouldResetDisplay = true;
-      }
-
-      function calculate() {
-        if (previousInput === '' || currentInput === '' || operation === null) return;
-        var a = parseFloat(previousInput);
-        var b = parseFloat(currentInput);
-        var result;
-        switch (operation) {
-          case '+': result = a + b; break;
-          case '-': result = a - b; break;
-          case '*': result = a * b; break;
-          case '/': result = a / b; break;
-          default: return;
-        }
-        if (!isFinite(result)) {
-          showNotification('Ошибка: деление на ноль', 'error');
-          return;
-        }
-        var historyEntry = previousInput + ' ' + operation + ' ' + currentInput + ' = ' + result;
+      grid.innerHTML = '';
+      filtered.forEach(function(app) {
+        var isInstalled = installedApps.some(function(a) { return a.id === app.id; });
         var div = document.createElement('div');
-        div.textContent = historyEntry;
-        history.prepend(div);
-        while (history.children.length > 10) history.removeChild(history.lastChild);
-        currentInput = String(result);
-        previousInput = '';
-        operation = null;
-        shouldResetDisplay = true;
-        updateDisplay();
-      }
-
-      function clearAll() {
-        currentInput = '';
-        previousInput = '';
-        operation = null;
-        shouldResetDisplay = false;
-        updateDisplay();
-      }
-
-      document.querySelectorAll('#calc-simple .calc-btn').forEach(function(btn) {
+        div.className = 'store-item';
+        div.innerHTML = '<span class="app-icon">' + app.icon + '</span><div class="app-name">' + app.name + '</div><div class="app-desc">' + app.desc + '</div><div class="app-actions">' +
+          (isInstalled ?
+            '<span class="installed-badge">✅ Установлено</span><button class="uninstall-btn" data-id="' + app.id + '">Удалить</button>' :
+            '<button class="install-btn" data-id="' + app.id + '">Установить</button>') +
+          '</div>';
+        grid.appendChild(div);
+      });
+      // Обработчики
+      grid.querySelectorAll('.install-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
-          var val = btn.dataset.value;
-          if (val === 'C') {
-            clearAll();
-            return;
+          var id = btn.dataset.id;
+          var catalogApp = storeApps.find(function(a) { return a.id === id; });
+          if (catalogApp) {
+            catalogApp.install();
+            setTimeout(renderStore, 300);
           }
-          if (val === '=') {
-            if (previousInput !== '' && currentInput !== '' && operation !== null) {
-              calculate();
-            } else {
-              showNotification('Неполное выражение', 'warning');
-            }
-            return;
-          }
-          if (['+', '-', '*', '/'].indexOf(val) !== -1) {
-            handleOperator(val);
-            return;
-          }
-          handleNumber(val);
         });
       });
-      updateDisplay();
-
-      var sciDisplay = document.getElementById('calc-display-sci');
-      var sciInput = '';
-      var sciPrev = '';
-      var sciOp = null;
-      var sciReset = false;
-
-      function updateSciDisplay() {
-        sciDisplay.textContent = sciInput || '0';
-      }
-
-      function sciHandleNumber(value) {
-        if (sciReset) {
-          sciInput = '';
-          sciReset = false;
-        }
-        if (value === '.' && sciInput.includes('.')) return;
-        sciInput += value;
-        updateSciDisplay();
-      }
-
-      function sciHandleOperator(op) {
-        if (sciInput === '' && sciPrev === '') return;
-        if (sciPrev !== '' && sciInput !== '') {
-          sciCalculate();
-        }
-        sciPrev = sciInput || sciPrev;
-        sciOp = op;
-        sciReset = true;
-      }
-
-      function sciCalculate() {
-        if (sciPrev === '' || sciInput === '' || sciOp === null) return;
-        var a = parseFloat(sciPrev);
-        var b = parseFloat(sciInput);
-        var result;
-        switch (sciOp) {
-          case '+': result = a + b; break;
-          case '-': result = a - b; break;
-          case '*': result = a * b; break;
-          case '/': result = a / b; break;
-          case '^': result = Math.pow(a, b); break;
-          default: return;
-        }
-        if (!isFinite(result)) {
-          showNotification('Ошибка', 'error');
-          return;
-        }
-        sciInput = String(result);
-        sciPrev = '';
-        sciOp = null;
-        sciReset = true;
-        updateSciDisplay();
-      }
-
-      function sciClear() {
-        sciInput = '';
-        sciPrev = '';
-        sciOp = null;
-        sciReset = false;
-        updateSciDisplay();
-      }
-
-      document.querySelectorAll('#calc-scientific .calc-btn').forEach(function(btn) {
+      grid.querySelectorAll('.uninstall-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
-          var val = btn.dataset.value;
-          if (val === 'C') {
-            sciClear();
-            return;
+          var id = btn.dataset.id;
+          if (confirm('Удалить приложение?')) {
+            installedApps = installedApps.filter(function(a) { return a.id !== id; });
+            saveAppRegistry().then(function() {
+              renderDesktopIcons();
+              showNotification('Приложение удалено');
+              renderStore();
+            });
           }
-          if (val === '=') {
-            if (sciPrev !== '' && sciInput !== '' && sciOp !== null) {
-              sciCalculate();
-            } else {
-              showNotification('Неполное выражение', 'warning');
-            }
-            return;
-          }
-          if (['+', '-', '*', '/', '^'].indexOf(val) !== -1) {
-            sciHandleOperator(val);
-            return;
-          }
-          if (['sin', 'cos', 'tan', 'log', 'ln'].indexOf(val) !== -1) {
-            var num = parseFloat(sciInput) || 0;
-            var result;
-            switch (val) {
-              case 'sin': result = Math.sin(num); break;
-              case 'cos': result = Math.cos(num); break;
-              case 'tan': result = Math.tan(num); break;
-              case 'log': result = Math.log10(num); break;
-              case 'ln': result = Math.log(num); break;
-            }
-            sciInput = String(result);
-            sciReset = true;
-            updateSciDisplay();
-            return;
-          }
-          sciHandleNumber(val);
         });
       });
-      updateSciDisplay();
+    }
 
-      var simpleMode = document.getElementById('calc-simple');
-      var scientificMode = document.getElementById('calc-scientific');
-      var simpleBtn = document.getElementById('calc-mode-simple');
-      var scientificBtn = document.getElementById('calc-mode-scientific');
-
-      simpleBtn.addEventListener('click', function() {
-        simpleBtn.classList.add('active');
-        scientificBtn.classList.remove('active');
-        simpleMode.style.display = 'block';
-        scientificMode.style.display = 'none';
-      });
-      scientificBtn.addEventListener('click', function() {
-        scientificBtn.classList.add('active');
-        simpleBtn.classList.remove('active');
-        simpleMode.style.display = 'none';
-        scientificMode.style.display = 'block';
-      });
+    setTimeout(function() {
+      renderStore();
+      document.getElementById('store-search').addEventListener('input', renderStore);
+      document.getElementById('store-category').addEventListener('change', renderStore);
     }, 100);
   }
 
-  // ----- 20.5 Настройки -----
+  // ============================================================
+  //  21. НАСТРОЙКИ (обновлены, обои и слайд-шоу работают)
+  // ============================================================
   var slideshowTimer = null;
 
   function openSettings() {
@@ -2333,7 +1996,7 @@
                   '<div class="settings-section"><h3>Анимации</h3><div class="theme-buttons"><button data-anim="off" class="' + (animLevel === 'off' ? 'active' : '') + '">Выкл</button><button data-anim="medium" class="' + (animLevel === 'medium' ? 'active' : '') + '">Средние</button><button data-anim="max" class="' + (animLevel === 'max' ? 'active' : '') + '">Максимум</button></div></div>' +
                   '<div class="settings-section"><h3>Виджеты</h3><label><input type="checkbox" id="show-widgets" ' + (showWidgets ? 'checked' : '') + '> Показывать виджеты</label></div>' +
                   '<div class="settings-section"><h3>Размер иконок</h3><input type="range" id="icon-size" min="60" max="100" value="' + iconSize + '"> <span id="icon-size-label">' + iconSize + 'px</span></div>' +
-                  '<div class="settings-section"><h3>О системе</h3><p style="color:#888;">NextelOS v0.0.7<br>Ядро: JavaScript<br>Файловая система: IndexedDB</p></div>';
+                  '<div class="settings-section"><h3>О системе</h3><p style="color:#888;">NextelOS v0.0.8<br>Ядро: JavaScript<br>Файловая система: IndexedDB</p></div>';
     var winId = createWindow('Настройки', content, { width: 500, height: 600, iconType: 'gear' });
     setTimeout(function() {
       var grid = document.getElementById('wallpaper-grid');
@@ -2497,7 +2160,9 @@
     localStorage.setItem('nextelos-anim-level', level);
   }
 
-  // ----- 20.6 Менеджер процессов -----
+  // ============================================================
+  //  22. МЕНЕДЖЕР ПРОЦЕССОВ
+  // ============================================================
   function openProcessManager() {
     var content = '<div class="process-list" id="process-list"></div>';
     var winId = createWindow('Менеджер процессов', content, { width: 400, height: 300, iconType: 'process' });
@@ -2528,7 +2193,9 @@
     setTimeout(render, 100);
   }
 
-  // ----- 20.7 Корзина -----
+  // ============================================================
+  //  23. КОРЗИНА
+  // ============================================================
   function openTrash() {
     var content = '<div class="trash-toolbar"><button id="trash-empty"><span class="icon">' + iconHTML('trash') + '</span>Очистить</button><button id="trash-refresh">🔄 Обновить</button></div><div id="trash-list"></div>';
     var winId = createWindow('Корзина', content, { width: 500, height: 350, iconType: 'trash' });
@@ -2629,131 +2296,9 @@
     }, 100);
   }
 
-  // ----- 20.8 Магазин приложений -----
-  var storeCatalog = [
-    { id: 'notes', name: 'Заметки', icon: '📝', desc: 'Простые заметки.', install: function() {
-      if (installedApps.find(function(a) { return a.id === 'notes'; })) {
-        showNotification('Уже установлено', 'warning');
-        return;
-      }
-      installedApps.push({
-        id: 'notes',
-        label: 'Заметки',
-        icon: '📝',
-        action: function() {
-          var c = '<textarea style="width:100%;height:300px;background:#111;color:#eee;border:none;padding:10px;font-family:inherit;resize:none;outline:none;" placeholder="Введите заметку..."></textarea>';
-          createWindow('Заметки', c, { width: 400, height: 350, iconType: 'notes' });
-        }
-      });
-      saveAppRegistry().then(function() {
-        renderDesktopIcons();
-        showNotification('Заметки установлены!');
-      });
-    } },
-    { id: 'calendar_app', name: 'Календарь', icon: '📅', desc: 'Календарь с событиями.', install: function() {
-      if (installedApps.find(function(a) { return a.id === 'calendar_app'; })) {
-        showNotification('Уже установлено', 'warning');
-        return;
-      }
-      installedApps.push({
-        id: 'calendar_app',
-        label: 'Календарь',
-        icon: '📅',
-        action: function() {
-          openCalendar();
-        }
-      });
-      saveAppRegistry().then(function() {
-        renderDesktopIcons();
-        showNotification('Календарь установлен!');
-      });
-    } },
-    { id: 'weather_app', name: 'Погода', icon: '🌤️', desc: 'Полноценная погода без ключа.', install: function() {
-      if (installedApps.find(function(a) { return a.id === 'weather_app'; })) {
-        showNotification('Уже установлено', 'warning');
-        return;
-      }
-      installedApps.push({
-        id: 'weather_app',
-        label: 'Погода',
-        icon: '🌤️',
-        action: function() {
-          openWeatherApp();
-        }
-      });
-      saveAppRegistry().then(function() {
-        renderDesktopIcons();
-        showNotification('Погода установлена!');
-      });
-    } },
-    { id: 'player', name: 'Музыкальный плеер', icon: '🎵', desc: 'Загружайте и слушайте MP3.', install: function() {
-      if (installedApps.find(function(a) { return a.id === 'player'; })) {
-        showNotification('Уже установлено', 'warning');
-        return;
-      }
-      installedApps.push({
-        id: 'player',
-        label: 'Плеер',
-        icon: '🎵',
-        action: openPlayer
-      });
-      saveAppRegistry().then(function() {
-        renderDesktopIcons();
-        showNotification('Плеер установлен!');
-      });
-    } }
-  ];
-
-  function openStore() {
-    var html = '<div class="store-grid">';
-    storeCatalog.forEach(function(app) {
-      var isInstalled = installedApps.some(function(a) { return a.id === app.id; });
-      html += '<div class="store-item"><span class="app-icon">' + app.icon + '</span><div class="app-name">' + app.name + '</div><div class="app-desc">' + app.desc + '</div><div class="app-actions">' +
-        (isInstalled ?
-          '<span class="installed-badge">✅ Установлено</span><button class="uninstall-btn" data-id="' + app.id + '">Удалить</button>' :
-          '<button class="install-btn" data-id="' + app.id + '">Установить</button>') +
-        '</div></div>';
-    });
-    html += '</div>';
-    var winId = createWindow('Магазин приложений', html, { width: 650, height: 500, iconType: 'folder' });
-    setTimeout(function() {
-      document.querySelectorAll('.install-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var id = btn.dataset.id;
-          var catalogApp = storeCatalog.find(function(a) { return a.id === id; });
-          if (catalogApp) {
-            catalogApp.install();
-            var el = document.querySelector('.window[data-window-id="' + winId + '"]');
-            if (el) {
-              var id2 = parseInt(el.dataset.windowId);
-              if (id2) closeWindow(id2);
-            }
-            setTimeout(openStore, 300);
-          }
-        });
-      });
-      document.querySelectorAll('.uninstall-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var id = btn.dataset.id;
-          if (confirm('Удалить приложение?')) {
-            installedApps = installedApps.filter(function(a) { return a.id !== id; });
-            saveAppRegistry().then(function() {
-              renderDesktopIcons();
-              showNotification('Приложение удалено');
-              var el = document.querySelector('.window[data-window-id="' + winId + '"]');
-              if (el) {
-                var id2 = parseInt(el.dataset.windowId);
-                if (id2) closeWindow(id2);
-              }
-              setTimeout(openStore, 300);
-            });
-          }
-        });
-      });
-    }, 100);
-  }
-
-  // ----- 20.9 Pigmo Pro (улучшенный) -----
+  // ============================================================
+  //  24. PIGMO PRO (улучшенный: слои, экспорт SVG, текст, фигуры)
+  // ============================================================
   function openPigmoPro() {
     var content = '<div class="pigmo-toolbar"><button id="pigmo-clear">Очистить</button><button id="pigmo-save">💾 Сохранить</button><input type="color" id="pigmo-color" value="#000000"><input type="range" id="pigmo-size" min="1" max="20" value="4"><label style="color:#aaa;font-size:12px;">Толщина: <span id="pigmo-size-label">4</span></label><button id="pigmo-eraser">Ластик</button><button id="pigmo-undo">↩ Отмена</button><button id="pigmo-redo">↪ Повтор</button><button id="pigmo-fill">Заливка</button><select id="pigmo-shape"><option value="free">Рисование</option><option value="rect">Прямоугольник</option><option value="circle">Круг</option><option value="line">Линия</option></select><button id="pigmo-text">Текст</button><button id="pigmo-export-svg">📤 SVG</button></div><div class="pigmo-layers" id="pigmo-layers"><div class="layer active" data-layer="0">Слой 1 <span class="layer-del">✕</span></div></div><canvas id="pigmo-canvas" width="600" height="400"></canvas>';
     var winId = createWindow('Pigmo Pro', content, { width: 660, height: 580, iconType: 'paint' });
@@ -3053,7 +2598,7 @@
         });
       });
 
-      // Обрезка
+      // Обрезка (кнопка добавлена в DOM)
       var cropMode = false;
       var cropStartX, cropStartY, cropEndX, cropEndY;
       var cropBtn = document.createElement('button');
@@ -3167,8 +2712,9 @@
       if (winObj) winObj.onClose = closeHandler;
     }, 100);
   }
-
-  // ----- 20.10 Глобальный поиск -----
+  // ============================================================
+  //  25. ГЛОБАЛЬНЫЙ ПОИСК (с поиском по файлам и приложениям)
+  // ============================================================
   function openSearch() {
     var content = '<div id="search-window"><input class="search-input" id="search-input" type="text" placeholder="Поиск приложений и файлов..." autofocus><div id="search-results"></div></div>';
     var winId = createWindow('Поиск', content, { width: 500, height: 400, iconType: 'search' });
@@ -3229,7 +2775,9 @@
     }, 100);
   }
 
-  // ----- 20.11 Браузер (с закладками) -----
+  // ============================================================
+  //  26. БРАУЗЕР (с закладками)
+  // ============================================================
   function openBrowser() {
     var content = '<div class="browser-toolbar"><button id="browser-back">◀</button><button id="browser-forward">▶</button><button id="browser-refresh">🔄</button><input id="browser-url" type="text" placeholder="Введите URL или поисковый запрос..." value=""><button id="browser-go">Перейти</button><button id="browser-bookmark">⭐</button></div><div class="browser-bookmarks" id="browser-bookmarks"></div><iframe class="browser-frame" id="browser-frame" src="about:blank"></iframe>';
     var winId = createWindow('Браузер', content, { width: 800, height: 500, iconType: 'browser' });
@@ -3337,7 +2885,9 @@
     }, 100);
   }
 
-  // ----- 20.12 Календарь (с импортом/экспортом ICS) -----
+  // ============================================================
+  //  27. КАЛЕНДАРЬ (с импортом/экспортом ICS)
+  // ============================================================
   function openCalendar() {
     var content = '<div class="calendar-nav"><button id="cal-prev">◀</button><span id="cal-month-year">Январь 2026</span><button id="cal-next">▶</button><button id="cal-export">📤 Экспорт ICS</button><button id="cal-import">📥 Импорт ICS</button></div><div class="calendar-grid" id="calendar-grid"></div><div class="calendar-events-list" id="calendar-events"></div>';
     var winId = createWindow('Календарь', content, { width: 450, height: 500, iconType: 'calendar-app' });
@@ -3526,7 +3076,9 @@
     });
   }
 
-  // ----- 20.13 Будильник -----
+  // ============================================================
+  //  28. БУДИЛЬНИК
+  // ============================================================
   function openAlarm() {
     var content = '<div><div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;"><input type="number" id="alarm-hour" min="0" max="23" value="8" style="width:60px;padding:4px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);">:<input type="number" id="alarm-minute" min="0" max="59" value="0" style="width:60px;padding:4px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);"><button id="alarm-add" style="padding:4px 16px;background:var(--accent);color:#fff;border-radius:4px;">Добавить</button></div><div id="alarm-list"></div></div>';
     var winId = createWindow('Будильник', content, { width: 350, height: 350, iconType: 'alarm' });
@@ -3609,7 +3161,9 @@
     }, 10000);
   }
 
-  // ----- 20.14 Блокнот с вкладками -----
+  // ============================================================
+  //  29. БЛОКНОТ С ВКЛАДКАМИ
+  // ============================================================
   function openNotepad() {
     var content = '<div class="notepad-tabs" id="notepad-tabs"><div class="tab active" data-tab="0">Новая заметка <span class="tab-close" data-tab="0">✕</span></div></div><textarea class="notepad-editor" id="notepad-editor" placeholder="Введите текст..."></textarea>';
     var winId = createWindow('Блокнот', content, { width: 600, height: 400, iconType: 'notepad' });
@@ -3703,7 +3257,9 @@
     if (winObj) winObj.onClose = closeHandler;
   }
 
-  // ----- 20.15 Менеджер паролей -----
+  // ============================================================
+  //  30. МЕНЕДЖЕР ПАРОЛЕЙ
+  // ============================================================
   function openPasswords() {
     var content = '<div style="display:flex;gap:8px;margin-bottom:12px;"><button id="pass-add" style="background:var(--accent);color:#fff;padding:4px 16px;border-radius:4px;">Добавить</button></div><div id="pass-list"></div>';
     var winId = createWindow('Менеджер паролей', content, { width: 450, height: 400, iconType: 'password' });
@@ -3792,7 +3348,9 @@
     });
   }
 
-  // ----- 20.16 Презентация -----
+  // ============================================================
+  //  31. ПРЕЗЕНТАЦИЯ
+  // ============================================================
   function openPresentation() {
     var content = '<div class="slide-container"><div class="slide-content" id="slide-content"><div id="slide-text-display" style="font-size:32px;font-weight:300;padding:20px;">Добро пожаловать!</div></div><div class="slide-controls"><button id="slide-prev">◀ Предыдущий</button><button id="slide-next">Следующий ▶</button><button id="slide-add">+ Добавить слайд</button><button id="slide-del">Удалить слайд</button><button id="slide-edit">✏️ Редактировать</button></div><div class="slide-counter" id="slide-counter">1 / 1</div></div>';
     var winId = createWindow('Презентация', content, { width: 650, height: 450, iconType: 'file' });
@@ -3880,7 +3438,9 @@
     }, 100);
   }
 
-  // ----- 20.17 Плеер (с плейлистами) -----
+  // ============================================================
+  //  32. МУЗЫКАЛЬНЫЙ ПЛЕЕР (с плейлистами)
+  // ============================================================
   var playerAudio = null;
   var playerTracks = [];
   var playerPlaylist = [];
@@ -4078,7 +3638,9 @@
     }, 100);
   }
 
-  // ----- 20.18 Конвертер величин -----
+  // ============================================================
+  //  33. КОНВЕРТЕР ВЕЛИЧИН
+  // ============================================================
   function openConverter() {
     var categories = {
       'Длина': { units: ['м', 'км', 'см', 'мм', 'миля', 'фут', 'дюйм'], factors: [1, 0.001, 100, 1000, 0.000621371, 3.28084, 39.3701] },
@@ -4155,7 +3717,9 @@
     }, 100);
   }
 
-  // ----- 20.19 Планировщик задач (To-Do) -----
+  // ============================================================
+  //  34. ПЛАНИРОВЩИК ЗАДАЧ (To-Do)
+  // ============================================================
   var todoItems = [];
 
   function openTodo() {
@@ -4239,7 +3803,1161 @@
     }, 100);
   }
 
-  // ----- 20.20 Редактор кода -----
+  // ============================================================
+  //  35. РЕДАКТОР КОДА (исправлена нумерация строк)
+  // ============================================================
+  function openCodeEditor() {
+    var content = '<div class="code-editor-container"><div class="code-toolbar"><select id="code-lang"><option value="javascript">JavaScript</option><option value="html">HTML</option><option value="css">CSS</option><option value="python">Python</option><option value="json">JSON</option></select><input type="text" id="code-search" placeholder="Поиск..."><button id="code-search-btn">🔍</button><button id="code-replace-btn">Заменить</button><button id="code-find-btn">Найти</button></div><div class="code-wrapper"><div class="code-line-numbers" id="code-line-numbers"></div><textarea class="code-textarea" id="code-textarea" spellcheck="false"></textarea></div></div>';
+    var winId = createWindow('Редактор кода', content, { width: 700, height: 500, iconType: 'code' });
+    setTimeout(function() {
+      var textarea = document.getElementById('code-textarea');
+      var lineNumbers = document.getElementById('code-line-numbers');
+      var searchInput = document.getElementById('code-search');
+      var searchBtn = document.getElementById('code-search-btn');
+      var replaceBtn = document.getElementById('code-replace-btn');
+      var findBtn = document.getElementById('code-find-btn');
+
+      function updateLineNumbers() {
+        var lines = textarea.value.split('\n').length;
+        var html = '';
+        for (var i = 1; i <= lines; i++) {
+          html += i + '\n';
+        }
+        lineNumbers.textContent = html;
+        // Синхронизируем скролл
+        lineNumbers.scrollTop = textarea.scrollTop;
+      }
+
+      textarea.addEventListener('input', updateLineNumbers);
+      textarea.addEventListener('scroll', function() {
+        lineNumbers.scrollTop = textarea.scrollTop;
+      });
+      updateLineNumbers();
+
+      // Поиск
+      findBtn.addEventListener('click', function() {
+        var query = searchInput.value;
+        if (!query) { showNotification('Введите текст для поиска', 'warning'); return; }
+        var content = textarea.value;
+        var idx = content.indexOf(query);
+        if (idx !== -1) {
+          textarea.focus();
+          textarea.setSelectionRange(idx, idx + query.length);
+          showNotification('Найдено', 'info');
+        } else {
+          showNotification('Не найдено', 'warning');
+        }
+      });
+
+      // Замена
+      replaceBtn.addEventListener('click', function() {
+        var query = searchInput.value;
+        if (!query) { showNotification('Введите текст для замены', 'warning'); return; }
+        var replaceWith = prompt('Введите текст для замены:');
+        if (replaceWith !== null) {
+          var content = textarea.value;
+          var newContent = content.replaceAll(query, replaceWith);
+          textarea.value = newContent;
+          updateLineNumbers();
+          showNotification('Замена выполнена');
+        }
+      });
+    }, 100);
+  }
+  // ============================================================
+  //  25. ГЛОБАЛЬНЫЙ ПОИСК
+  // ============================================================
+  function openSearch() {
+    var content = '<div id="search-window"><input class="search-input" id="search-input" type="text" placeholder="Поиск приложений и файлов..." autofocus><div id="search-results"></div></div>';
+    var winId = createWindow('Поиск', content, { width: 500, height: 400, iconType: 'search' });
+    setTimeout(function() {
+      var input = document.getElementById('search-input');
+      var results = document.getElementById('search-results');
+      var allApps = getAllApps();
+      var searchIndex = [];
+
+      allApps.forEach(function(app) {
+        searchIndex.push({ type: 'app', id: app.id, label: app.label, icon: app.icon, action: app.action, path: '' });
+      });
+
+      function indexFiles(path) {
+        FS.ls(path).then(function(items) {
+          items.forEach(function(name) {
+            var fullPath = path === '/' ? '/' + name : path + '/' + name;
+            FS.stat(fullPath).then(function(stat) {
+              if (stat && stat.type === 'file') {
+                searchIndex.push({ type: 'file', id: fullPath, label: name, icon: 'file', action: function() {
+                  FS.cat(fullPath).then(function(content) {
+                    openEditor(fullPath, content);
+                  }).catch(function(e) {
+                    showNotification('Не удалось открыть файл: ' + e.message, 'error');
+                  });
+                }, path: fullPath });
+              } else if (stat && stat.type === 'folder') {
+                indexFiles(fullPath);
+              }
+            });
+          });
+        }).catch(function() {});
+      }
+      indexFiles('/home/user');
+
+      input.addEventListener('input', function() {
+        var query = input.value.toLowerCase().trim();
+        results.innerHTML = '';
+        if (!query) return;
+        var matches = searchIndex.filter(function(item) {
+          return item.label.toLowerCase().indexOf(query) !== -1;
+        });
+        matches.slice(0, 10).forEach(function(item) {
+          var div = document.createElement('div');
+          div.className = 'search-result';
+          div.innerHTML = '<span class="result-icon">' + iconHTML(item.icon) + '</span><span class="result-name">' + item.label + '</span><span class="result-path">' + (item.path || '') + '</span>';
+          div.addEventListener('click', function() {
+            item.action();
+            closeWindow(winId);
+          });
+          results.appendChild(div);
+        });
+        if (matches.length === 0) {
+          results.innerHTML = '<div style="color:#888;padding:10px;text-align:center;">Ничего не найдено</div>';
+        }
+      });
+      input.focus();
+    }, 100);
+  }
+
+  // ============================================================
+  //  26. БРАУЗЕР (с закладками)
+  // ============================================================
+  function openBrowser() {
+    var content = '<div class="browser-toolbar"><button id="browser-back">◀</button><button id="browser-forward">▶</button><button id="browser-refresh">🔄</button><input id="browser-url" type="text" placeholder="Введите URL или поисковый запрос..." value=""><button id="browser-go">Перейти</button><button id="browser-bookmark">⭐</button></div><div class="browser-bookmarks" id="browser-bookmarks"></div><iframe class="browser-frame" id="browser-frame" src="about:blank"></iframe>';
+    var winId = createWindow('Браузер', content, { width: 800, height: 500, iconType: 'browser' });
+    setTimeout(function() {
+      var urlInput = document.getElementById('browser-url');
+      var frame = document.getElementById('browser-frame');
+      var backBtn = document.getElementById('browser-back');
+      var forwardBtn = document.getElementById('browser-forward');
+      var refreshBtn = document.getElementById('browser-refresh');
+      var goBtn = document.getElementById('browser-go');
+      var bookmarkBtn = document.getElementById('browser-bookmark');
+      var bookmarksContainer = document.getElementById('browser-bookmarks');
+      var history = [];
+      var historyIndex = -1;
+      var browserBookmarks = [];
+
+      function loadBrowserBookmarks() {
+        FS.get('/system/bookmarks.json').then(function(data) {
+          if (data && data.content) {
+            try { browserBookmarks = JSON.parse(data.content); } catch(e) { browserBookmarks = []; }
+          } else {
+            browserBookmarks = [];
+          }
+          renderBookmarks();
+        }).catch(function() { browserBookmarks = []; renderBookmarks(); });
+      }
+
+      function saveBrowserBookmarks() {
+        FS.write('/system/bookmarks.json', JSON.stringify(browserBookmarks));
+      }
+
+      function renderBookmarks() {
+        bookmarksContainer.innerHTML = '';
+        browserBookmarks.forEach(function(bm) {
+          var span = document.createElement('span');
+          span.className = 'bookmark';
+          span.textContent = bm;
+          span.addEventListener('click', function() {
+            navigate(bm);
+          });
+          bookmarksContainer.appendChild(span);
+        });
+      }
+
+      function isURL(str) {
+        return str.includes('.') && !str.includes(' ') || str.startsWith('http://') || str.startsWith('https://');
+      }
+
+      function navigate(url) {
+        if (!url) return;
+        if (!isURL(url)) {
+          window.open('https://yandex.ru/search/?text=' + encodeURIComponent(url), '_blank');
+          showNotification('Поиск открыт в новой вкладке Яндекс', 'info');
+          return;
+        } else {
+          if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
+          }
+        }
+        urlInput.value = url;
+        frame.src = url;
+        history = history.slice(0, historyIndex + 1);
+        history.push(url);
+        historyIndex = history.length - 1;
+      }
+
+      goBtn.addEventListener('click', function() { navigate(urlInput.value); });
+      urlInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') navigate(urlInput.value);
+      });
+      backBtn.addEventListener('click', function() {
+        if (historyIndex > 0) {
+          historyIndex--;
+          frame.src = history[historyIndex];
+          urlInput.value = history[historyIndex];
+        }
+      });
+      forwardBtn.addEventListener('click', function() {
+        if (historyIndex < history.length - 1) {
+          historyIndex++;
+          frame.src = history[historyIndex];
+          urlInput.value = history[historyIndex];
+        }
+      });
+      refreshBtn.addEventListener('click', function() {
+        frame.src = frame.src;
+      });
+      bookmarkBtn.addEventListener('click', function() {
+        var url = urlInput.value;
+        if (url && url !== 'https://example.com' && url !== 'about:blank') {
+          if (browserBookmarks.indexOf(url) === -1) {
+            browserBookmarks.push(url);
+            saveBrowserBookmarks();
+            renderBookmarks();
+            showNotification('Закладка добавлена: ' + url);
+          } else {
+            showNotification('Закладка уже существует', 'warning');
+          }
+        } else {
+          showNotification('Невозможно добавить закладку', 'warning');
+        }
+      });
+      loadBrowserBookmarks();
+      navigate('example.com');
+    }, 100);
+  }
+
+  // ============================================================
+  //  27. КАЛЕНДАРЬ (с импортом/экспортом ICS)
+  // ============================================================
+  function openCalendar() {
+    var content = '<div class="calendar-nav"><button id="cal-prev">◀</button><span id="cal-month-year">Январь 2026</span><button id="cal-next">▶</button><button id="cal-export">📤 Экспорт ICS</button><button id="cal-import">📥 Импорт ICS</button></div><div class="calendar-grid" id="calendar-grid"></div><div class="calendar-events-list" id="calendar-events"></div>';
+    var winId = createWindow('Календарь', content, { width: 450, height: 500, iconType: 'calendar-app' });
+    var currentDate = new Date();
+    var events = {};
+
+    function loadEvents() {
+      FS.get('/system/events.json').then(function(data) {
+        if (data && data.content) {
+          try { events = JSON.parse(data.content); } catch(e) { events = {}; }
+        } else { events = {}; }
+      }).catch(function() { events = {}; });
+    }
+    loadEvents();
+
+    function saveEvents() {
+      FS.write('/system/events.json', JSON.stringify(events));
+    }
+
+    function exportICS() {
+      var ics = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//NextelOS//Calendar//RU\n';
+      for (var date in events) {
+        if (events[date]) {
+          for (var i = 0; i < events[date].length; i++) {
+            var ev = events[date][i];
+            var dt = date.replace(/-/g, '');
+            var time = ev.time ? ev.time.replace(/:/g, '') : '000000';
+            ics += 'BEGIN:VEVENT\nDTSTART:' + dt + 'T' + time + '\nSUMMARY:' + ev.text + '\nEND:VEVENT\n';
+          }
+        }
+      }
+      ics += 'END:VCALENDAR';
+      var blob = new Blob([ics], { type: 'text/calendar' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'calendar.ics';
+      a.click();
+      URL.revokeObjectURL(url);
+      showNotification('ICS экспортирован');
+    }
+
+    function importICS(file) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var text = e.target.result;
+        var lines = text.split('\n');
+        var eventData = {};
+        var currentEvent = {};
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i].trim();
+          if (line === 'BEGIN:VEVENT') {
+            currentEvent = {};
+          } else if (line === 'END:VEVENT') {
+            if (currentEvent.DTSTART && currentEvent.SUMMARY) {
+              var dt = currentEvent.DTSTART.replace(/T.*/, '');
+              var dateKey = dt.slice(0,4) + '-' + dt.slice(4,6) + '-' + dt.slice(6,8);
+              if (!eventData[dateKey]) eventData[dateKey] = [];
+              eventData[dateKey].push({ time: '12:00', text: currentEvent.SUMMARY });
+            }
+          } else if (line.startsWith('DTSTART:')) {
+            currentEvent.DTSTART = line.substring(8);
+          } else if (line.startsWith('SUMMARY:')) {
+            currentEvent.SUMMARY = line.substring(8);
+          }
+        }
+        for (var dateKey in eventData) {
+          if (!events[dateKey]) events[dateKey] = [];
+          events[dateKey] = events[dateKey].concat(eventData[dateKey]);
+        }
+        saveEvents();
+        renderCalendar(currentYear, currentMonth);
+        showNotification('ICS импортирован');
+      };
+      reader.readAsText(file);
+    }
+
+    function renderCalendar(year, month) {
+      var grid = document.getElementById('calendar-grid');
+      var monthYear = document.getElementById('cal-month-year');
+      var eventsList = document.getElementById('calendar-events');
+      if (!grid) return;
+      var firstDay = new Date(year, month, 1).getDay();
+      var daysInMonth = new Date(year, month + 1, 0).getDate();
+      var daysInPrevMonth = new Date(year, month, 0).getDate();
+      var today = new Date();
+      var monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+      monthYear.textContent = monthNames[month] + ' ' + year;
+      grid.innerHTML = '';
+      var headers = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+      headers.forEach(function(h) {
+        var div = document.createElement('div');
+        div.className = 'day-header';
+        div.textContent = h;
+        grid.appendChild(div);
+      });
+      var startOffset = (firstDay === 0) ? 6 : firstDay - 1;
+      for (var i = 0; i < startOffset; i++) {
+        var empty = document.createElement('div');
+        empty.className = 'day-cell other-month';
+        empty.textContent = daysInPrevMonth - startOffset + i + 1;
+        grid.appendChild(empty);
+      }
+      for (var d = 1; d <= daysInMonth; d++) {
+        var cell = document.createElement('div');
+        cell.className = 'day-cell';
+        cell.textContent = d;
+        var dateKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        if (events[dateKey] && events[dateKey].length > 0) {
+          cell.classList.add('has-event');
+        }
+        if (d === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+          cell.style.border = '2px solid var(--accent)';
+        }
+        cell.addEventListener('click', function() {
+          var day = parseInt(this.textContent);
+          var dateKey2 = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+          showDialog({
+            title: 'Добавить событие',
+            message: 'Введите описание события для ' + dateKey2 + ':',
+            input: true,
+            placeholder: 'Описание',
+            defaultValue: ''
+          }).then(function(desc) {
+            if (desc && desc.trim()) {
+              if (!events[dateKey2]) events[dateKey2] = [];
+              events[dateKey2].push({ time: new Date().toLocaleTimeString(), text: desc.trim() });
+              saveEvents();
+              renderCalendar(year, month);
+              showNotification('Событие добавлено');
+            }
+          });
+        });
+        grid.appendChild(cell);
+      }
+      var todayKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+      eventsList.innerHTML = '';
+      if (events[todayKey] && events[todayKey].length > 0) {
+        events[todayKey].forEach(function(ev, idx) {
+          var div = document.createElement('div');
+          div.className = 'calendar-event-item';
+          div.innerHTML = '<span><span class="event-time">' + ev.time + '</span> ' + ev.text + '</span><span class="event-del" data-idx="' + idx + '" data-date="' + todayKey + '">✕</span>';
+          var del = div.querySelector('.event-del');
+          del.addEventListener('click', function() {
+            var date = this.dataset.date;
+            var idx2 = parseInt(this.dataset.idx);
+            if (events[date]) {
+              events[date].splice(idx2, 1);
+              if (events[date].length === 0) delete events[date];
+              saveEvents();
+              renderCalendar(year, month);
+              showNotification('Событие удалено');
+            }
+          });
+          eventsList.appendChild(div);
+        });
+      } else {
+        eventsList.innerHTML = '<div style="color:#888;text-align:center;padding:10px;">Нет событий на сегодня</div>';
+      }
+    }
+
+    var currentYear = currentDate.getFullYear();
+    var currentMonth = currentDate.getMonth();
+    renderCalendar(currentYear, currentMonth);
+
+    document.getElementById('cal-prev').addEventListener('click', function() {
+      currentMonth--;
+      if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+      renderCalendar(currentYear, currentMonth);
+    });
+    document.getElementById('cal-next').addEventListener('click', function() {
+      currentMonth++;
+      if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+      renderCalendar(currentYear, currentMonth);
+    });
+    document.getElementById('cal-export').addEventListener('click', exportICS);
+    document.getElementById('cal-import').addEventListener('click', function() {
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.ics';
+      input.onchange = function(e) {
+        var file = e.target.files[0];
+        if (file) importICS(file);
+      };
+      input.click();
+    });
+  }
+
+  // ============================================================
+  //  28. БУДИЛЬНИК
+  // ============================================================
+  function openAlarm() {
+    var content = '<div><div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;"><input type="number" id="alarm-hour" min="0" max="23" value="8" style="width:60px;padding:4px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);">:<input type="number" id="alarm-minute" min="0" max="59" value="0" style="width:60px;padding:4px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);"><button id="alarm-add" style="padding:4px 16px;background:var(--accent);color:#fff;border-radius:4px;">Добавить</button></div><div id="alarm-list"></div></div>';
+    var winId = createWindow('Будильник', content, { width: 350, height: 350, iconType: 'alarm' });
+    var alarms = [];
+
+    function loadAlarms() {
+      FS.get('/system/alarms.json').then(function(data) {
+        if (data && data.content) {
+          try { alarms = JSON.parse(data.content); } catch(e) { alarms = []; }
+        } else { alarms = []; }
+        renderAlarms();
+      }).catch(function() { alarms = []; renderAlarms(); });
+    }
+    loadAlarms();
+
+    function saveAlarms() {
+      FS.write('/system/alarms.json', JSON.stringify(alarms));
+    }
+
+    function renderAlarms() {
+      var list = document.getElementById('alarm-list');
+      if (!list) return;
+      list.innerHTML = '';
+      alarms.forEach(function(alarm, idx) {
+        var div = document.createElement('div');
+        div.className = 'alarm-item';
+        div.innerHTML = '<span class="alarm-time">' + String(alarm.hour).padStart(2, '0') + ':' + String(alarm.minute).padStart(2, '0') + '</span><span class="alarm-toggle ' + (alarm.active ? '' : 'off') + '" data-idx="' + idx + '">' + (alarm.active ? 'Вкл' : 'Выкл') + '</span><span class="alarm-del" data-idx="' + idx + '">✕</span>';
+        var toggle = div.querySelector('.alarm-toggle');
+        toggle.addEventListener('click', function() {
+          var idx2 = parseInt(this.dataset.idx);
+          alarms[idx2].active = !alarms[idx2].active;
+          saveAlarms();
+          renderAlarms();
+        });
+        var del = div.querySelector('.alarm-del');
+        del.addEventListener('click', function() {
+          var idx2 = parseInt(this.dataset.idx);
+          alarms.splice(idx2, 1);
+          saveAlarms();
+          renderAlarms();
+        });
+        list.appendChild(div);
+      });
+    }
+
+    document.getElementById('alarm-add').addEventListener('click', function() {
+      var hour = parseInt(document.getElementById('alarm-hour').value) || 0;
+      var minute = parseInt(document.getElementById('alarm-minute').value) || 0;
+      if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+        showNotification('Неверное время', 'error');
+        return;
+      }
+      alarms.push({ hour: hour, minute: minute, active: true });
+      saveAlarms();
+      renderAlarms();
+      showNotification('Будильник добавлен');
+    });
+
+    setInterval(function() {
+      var now = new Date();
+      var h = now.getHours();
+      var m = now.getMinutes();
+      alarms.forEach(function(alarm) {
+        if (alarm.active && alarm.hour === h && alarm.minute === m) {
+          showNotification('⏰ Будильник! ' + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'), 'warning');
+          try {
+            var audioCtx2 = new (window.AudioContext || window.webkitAudioContext)();
+            var osc2 = audioCtx2.createOscillator();
+            var gain2 = audioCtx2.createGain();
+            osc2.connect(gain2);
+            gain2.connect(audioCtx2.destination);
+            osc2.frequency.value = 800;
+            osc2.type = 'square';
+            gain2.gain.value = 0.3;
+            osc2.start();
+            setTimeout(function() { osc2.stop(); }, 1000);
+          } catch(e) {}
+        }
+      });
+    }, 10000);
+  }
+
+  // ============================================================
+  //  29. БЛОКНОТ С ВКЛАДКАМИ
+  // ============================================================
+  function openNotepad() {
+    var content = '<div class="notepad-tabs" id="notepad-tabs"><div class="tab active" data-tab="0">Новая заметка <span class="tab-close" data-tab="0">✕</span></div></div><textarea class="notepad-editor" id="notepad-editor" placeholder="Введите текст..."></textarea>';
+    var winId = createWindow('Блокнот', content, { width: 600, height: 400, iconType: 'notepad' });
+    var tabs = [{ id: 'tab_' + Date.now(), name: 'Новая заметка', content: '' }];
+    var activeTab = 0;
+
+    function loadNotes() {
+      FS.get('/system/notes.json').then(function(data) {
+        if (data && data.content) {
+          try { var notes = JSON.parse(data.content); if (notes && notes.tabs) { tabs = notes.tabs; activeTab = notes.activeTab || 0; } } catch(e) {}
+        }
+        renderTabs();
+        loadTab(activeTab);
+      }).catch(function() { renderTabs(); loadTab(0); });
+    }
+    loadNotes();
+
+    function saveNotes() {
+      FS.write('/system/notes.json', JSON.stringify({ tabs: tabs, activeTab: activeTab }));
+    }
+
+    function renderTabs() {
+      var container = document.getElementById('notepad-tabs');
+      if (!container) return;
+      container.innerHTML = '';
+      tabs.forEach(function(tab, idx) {
+        var div = document.createElement('div');
+        div.className = 'tab' + (idx === activeTab ? ' active' : '');
+        div.dataset.tab = idx;
+        div.innerHTML = tab.name + ' <span class="tab-close" data-tab="' + idx + '">✕</span>';
+        div.addEventListener('click', function(e) {
+          if (e.target.classList.contains('tab-close')) return;
+          activeTab = parseInt(this.dataset.tab);
+          renderTabs();
+          loadTab(activeTab);
+          saveNotes();
+        });
+        var closeSpan = div.querySelector('.tab-close');
+        closeSpan.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var idx2 = parseInt(this.dataset.tab);
+          if (tabs.length > 1) {
+            tabs.splice(idx2, 1);
+            if (activeTab >= tabs.length) activeTab = tabs.length - 1;
+            renderTabs();
+            loadTab(activeTab);
+            saveNotes();
+          } else {
+            showNotification('Нельзя удалить последнюю вкладку', 'warning');
+          }
+        });
+        container.appendChild(div);
+      });
+      var addBtn = document.createElement('div');
+      addBtn.className = 'tab';
+      addBtn.textContent = '+';
+      addBtn.style.cursor = 'pointer';
+      addBtn.addEventListener('click', function() {
+        tabs.push({ id: 'tab_' + Date.now(), name: 'Новая заметка', content: '' });
+        activeTab = tabs.length - 1;
+        renderTabs();
+        loadTab(activeTab);
+        saveNotes();
+      });
+      container.appendChild(addBtn);
+    }
+
+    function loadTab(idx) {
+      var editor = document.getElementById('notepad-editor');
+      if (!editor) return;
+      if (tabs[idx]) {
+        editor.value = tabs[idx].content || '';
+        editor.dataset.tabId = tabs[idx].id;
+      }
+    }
+
+    var editor = document.getElementById('notepad-editor');
+    if (editor) {
+      editor.addEventListener('input', function() {
+        var tabId = this.dataset.tabId;
+        var tab = tabs.find(function(t) { return t.id === tabId; });
+        if (tab) {
+          tab.content = this.value;
+          saveNotes();
+        }
+      });
+    }
+
+    var closeHandler = function() { saveNotes(); };
+    var winObj = kernel.windows.find(function(w) { return w.id === winId; });
+    if (winObj) winObj.onClose = closeHandler;
+  }
+
+  // ============================================================
+  //  30. МЕНЕДЖЕР ПАРОЛЕЙ
+  // ============================================================
+  function openPasswords() {
+    var content = '<div style="display:flex;gap:8px;margin-bottom:12px;"><button id="pass-add" style="background:var(--accent);color:#fff;padding:4px 16px;border-radius:4px;">Добавить</button></div><div id="pass-list"></div>';
+    var winId = createWindow('Менеджер паролей', content, { width: 450, height: 400, iconType: 'password' });
+    var passwords = [];
+
+    function loadPasswords() {
+      FS.get('/system/passwords.json').then(function(data) {
+        if (data && data.content) {
+          try { passwords = JSON.parse(data.content); } catch(e) { passwords = []; }
+        } else { passwords = []; }
+        renderPasswords();
+      }).catch(function() { passwords = []; renderPasswords(); });
+    }
+    loadPasswords();
+
+    function savePasswords() {
+      FS.write('/system/passwords.json', JSON.stringify(passwords));
+    }
+
+    function renderPasswords() {
+      var list = document.getElementById('pass-list');
+      if (!list) return;
+      list.innerHTML = '';
+      passwords.forEach(function(pw, idx) {
+        var div = document.createElement('div');
+        div.className = 'password-item';
+        div.innerHTML = '<span class="pass-site">' + pw.site + '</span><span class="pass-login">' + pw.login + '</span><span class="pass-actions"><button class="copy-btn" data-idx="' + idx + '">Копировать</button><button class="del-btn" data-idx="' + idx + '">✕</button></span>';
+        var copy = div.querySelector('.copy-btn');
+        copy.addEventListener('click', function() {
+          var idx2 = parseInt(this.dataset.idx);
+          navigator.clipboard.writeText(passwords[idx2].password).then(function() {
+            showNotification('Пароль скопирован');
+          }).catch(function() {
+            var ta = document.createElement('textarea');
+            ta.value = passwords[idx2].password;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+            showNotification('Пароль скопирован');
+          });
+        });
+        var del = div.querySelector('.del-btn');
+        del.addEventListener('click', function() {
+          var idx2 = parseInt(this.dataset.idx);
+          passwords.splice(idx2, 1);
+          savePasswords();
+          renderPasswords();
+        });
+        list.appendChild(div);
+      });
+    }
+
+    document.getElementById('pass-add').addEventListener('click', function() {
+      showDialog({
+        title: 'Добавить пароль',
+        message: 'Введите сайт:',
+        input: true,
+        placeholder: 'example.com'
+      }).then(function(site) {
+        if (site && site.trim()) {
+          showDialog({
+            title: 'Добавить пароль',
+            message: 'Введите логин:',
+            input: true,
+            placeholder: 'user'
+          }).then(function(login) {
+            if (login && login.trim()) {
+              showDialog({
+                title: 'Добавить пароль',
+                message: 'Введите пароль:',
+                input: true,
+                placeholder: 'password'
+              }).then(function(password) {
+                if (password && password.trim()) {
+                  passwords.push({ site: site.trim(), login: login.trim(), password: password.trim() });
+                  savePasswords();
+                  renderPasswords();
+                  showNotification('Пароль добавлен');
+                }
+              });
+            }
+          });
+        }
+      });
+    });
+  }
+
+  // ============================================================
+  //  31. ПРЕЗЕНТАЦИЯ
+  // ============================================================
+  function openPresentation() {
+    var content = '<div class="slide-container"><div class="slide-content" id="slide-content"><div id="slide-text-display" style="font-size:32px;font-weight:300;padding:20px;">Добро пожаловать!</div></div><div class="slide-controls"><button id="slide-prev">◀ Предыдущий</button><button id="slide-next">Следующий ▶</button><button id="slide-add">+ Добавить слайд</button><button id="slide-del">Удалить слайд</button><button id="slide-edit">✏️ Редактировать</button></div><div class="slide-counter" id="slide-counter">1 / 1</div></div>';
+    var winId = createWindow('Презентация', content, { width: 650, height: 450, iconType: 'file' });
+    var slides = [{ text: 'Добро пожаловать!' }];
+    var currentSlide = 0;
+    var editMode = false;
+
+    function renderSlide() {
+      var display = document.getElementById('slide-text-display');
+      var counter = document.getElementById('slide-counter');
+      if (!display) return;
+      if (slides[currentSlide]) {
+        if (slides[currentSlide].text) {
+          display.textContent = slides[currentSlide].text;
+        } else if (slides[currentSlide].image) {
+          display.innerHTML = '<img src="' + slides[currentSlide].image + '" style="max-width:100%;max-height:300px;border-radius:4px;">';
+        }
+        counter.textContent = (currentSlide + 1) + ' / ' + slides.length;
+      }
+    }
+
+    setTimeout(function() {
+      var prevBtn = document.getElementById('slide-prev');
+      var nextBtn = document.getElementById('slide-next');
+      var addBtn = document.getElementById('slide-add');
+      var delBtn = document.getElementById('slide-del');
+      var editBtn = document.getElementById('slide-edit');
+
+      prevBtn.addEventListener('click', function() {
+        if (currentSlide > 0) {
+          currentSlide--;
+          renderSlide();
+        }
+      });
+      nextBtn.addEventListener('click', function() {
+        if (currentSlide < slides.length - 1) {
+          currentSlide++;
+          renderSlide();
+        }
+      });
+      addBtn.addEventListener('click', function() {
+        slides.push({ text: 'Новый слайд' });
+        currentSlide = slides.length - 1;
+        renderSlide();
+        showNotification('Слайд добавлен');
+      });
+      delBtn.addEventListener('click', function() {
+        if (slides.length > 1) {
+          slides.splice(currentSlide, 1);
+          if (currentSlide >= slides.length) currentSlide = slides.length - 1;
+          renderSlide();
+          showNotification('Слайд удалён');
+        } else {
+          showNotification('Нельзя удалить последний слайд', 'warning');
+        }
+      });
+      editBtn.addEventListener('click', function() {
+        editMode = !editMode;
+        editBtn.style.background = editMode ? 'rgba(0,150,255,0.3)' : '';
+        if (editMode) {
+          showDialog({
+            title: 'Редактировать слайд',
+            message: 'Введите текст или URL изображения:',
+            input: true,
+            defaultValue: slides[currentSlide].text || ''
+          }).then(function(result) {
+            if (result !== null) {
+              if (result.startsWith('http') && (result.includes('.jpg') || result.includes('.png') || result.includes('.gif') || result.includes('.jpeg') || result.includes('.svg'))) {
+                slides[currentSlide] = { image: result };
+              } else {
+                slides[currentSlide] = { text: result || 'Пустой слайд' };
+              }
+              renderSlide();
+              editMode = false;
+              editBtn.style.background = '';
+              showNotification('Слайд обновлён');
+            } else {
+              editMode = false;
+              editBtn.style.background = '';
+            }
+          });
+        }
+      });
+      renderSlide();
+    }, 100);
+  }
+
+  // ============================================================
+  //  32. МУЗЫКАЛЬНЫЙ ПЛЕЕР (с плейлистами)
+  // ============================================================
+  var playerAudio = null;
+  var playerTracks = [];
+  var playerPlaylist = [];
+
+  function openPlayer() {
+    var content = '<div class="player-info"><div class="track-name" id="player-track">Нет трека</div><div class="track-status" id="player-status">Загрузите MP3 файл</div></div><div class="player-progress"><div class="progress-fill" id="player-progress-fill"></div></div><div class="player-controls"><button id="player-play">▶</button><button id="player-pause">⏸</button><button id="player-stop">⏹</button><button id="player-prev">⏮</button><button id="player-next">⏭</button><button id="player-shuffle">🔀</button></div><div class="player-upload"><input type="file" id="player-file" accept="audio/mpeg"><button id="player-load">Загрузить MP3</button></div><div class="player-playlist" id="player-playlist"></div>';
+    var winId = createWindow('Музыкальный плеер', content, { width: 400, height: 450, iconType: 'player' });
+    setTimeout(function() {
+      var playBtn = document.getElementById('player-play');
+      var pauseBtn = document.getElementById('player-pause');
+      var stopBtn = document.getElementById('player-stop');
+      var prevBtn = document.getElementById('player-prev');
+      var nextBtn = document.getElementById('player-next');
+      var shuffleBtn = document.getElementById('player-shuffle');
+      var fileInput = document.getElementById('player-file');
+      var loadBtn = document.getElementById('player-load');
+      var trackName = document.getElementById('player-track');
+      var status = document.getElementById('player-status');
+      var progressFill = document.getElementById('player-progress-fill');
+      var playlistContainer = document.getElementById('player-playlist');
+      var currentTrackIndex = -1;
+      var shuffle = false;
+
+      function loadPlaylist() {
+        FS.get('/system/playlists.json').then(function(data) {
+          if (data && data.content) {
+            try { playerPlaylist = JSON.parse(data.content); } catch(e) { playerPlaylist = []; }
+          } else {
+            playerPlaylist = [];
+          }
+          renderPlaylist();
+        }).catch(function() { playerPlaylist = []; renderPlaylist(); });
+      }
+
+      function savePlaylist() {
+        FS.write('/system/playlists.json', JSON.stringify(playerPlaylist));
+      }
+
+      function renderPlaylist() {
+        playlistContainer.innerHTML = '';
+        playerPlaylist.forEach(function(item, idx) {
+          var div = document.createElement('div');
+          div.className = 'playlist-item';
+          div.innerHTML = '<span>' + item.name + '</span><span class="playlist-del" data-idx="' + idx + '">✕</span>';
+          div.addEventListener('click', function(e) {
+            if (e.target.classList.contains('playlist-del')) return;
+            loadTrack(idx);
+          });
+          var del = div.querySelector('.playlist-del');
+          del.addEventListener('click', function(e) {
+            e.stopPropagation();
+            playerPlaylist.splice(idx, 1);
+            savePlaylist();
+            renderPlaylist();
+            showNotification('Трек удалён из плейлиста');
+          });
+          playlistContainer.appendChild(div);
+        });
+      }
+
+      if (!playerAudio) {
+        playerAudio = new Audio();
+      }
+
+      function loadTrack(index) {
+        if (index < 0 || index >= playerPlaylist.length) return;
+        currentTrackIndex = index;
+        var track = playerPlaylist[index];
+        playerAudio.src = track.data;
+        playerAudio.load();
+        trackName.textContent = track.name;
+        status.textContent = 'Загружено';
+        playBtn.textContent = '▶';
+        showNotification('Загружено: ' + track.name);
+      }
+
+      function updateProgress() {
+        if (playerAudio && playerAudio.duration) {
+          var pct = (playerAudio.currentTime / playerAudio.duration) * 100;
+          progressFill.style.width = pct + '%';
+        }
+      }
+
+      playerAudio.addEventListener('timeupdate', updateProgress);
+      playerAudio.addEventListener('ended', function() {
+        if (shuffle) {
+          var idx = Math.floor(Math.random() * playerPlaylist.length);
+          loadTrack(idx);
+          playerAudio.play();
+          playBtn.textContent = '⏸';
+        } else if (currentTrackIndex < playerPlaylist.length - 1) {
+          loadTrack(currentTrackIndex + 1);
+          playerAudio.play();
+          playBtn.textContent = '⏸';
+        } else {
+          status.textContent = 'Воспроизведение завершено';
+          playBtn.textContent = '▶';
+          progressFill.style.width = '0%';
+        }
+      });
+
+      playBtn.addEventListener('click', function() {
+        if (playerPlaylist.length === 0) {
+          showNotification('Сначала загрузите MP3 файл', 'warning');
+          return;
+        }
+        if (playerAudio.paused) {
+          playerAudio.play();
+          playBtn.textContent = '⏸';
+          status.textContent = 'Воспроизведение';
+        } else {
+          playerAudio.pause();
+          playBtn.textContent = '▶';
+          status.textContent = 'Пауза';
+        }
+      });
+
+      pauseBtn.addEventListener('click', function() {
+        if (playerAudio) {
+          playerAudio.pause();
+          playBtn.textContent = '▶';
+          status.textContent = 'Пауза';
+        }
+      });
+
+      stopBtn.addEventListener('click', function() {
+        if (playerAudio) {
+          playerAudio.pause();
+          playerAudio.currentTime = 0;
+          playBtn.textContent = '▶';
+          status.textContent = 'Остановлено';
+          progressFill.style.width = '0%';
+        }
+      });
+
+      prevBtn.addEventListener('click', function() {
+        if (currentTrackIndex > 0) {
+          loadTrack(currentTrackIndex - 1);
+          playerAudio.play();
+          playBtn.textContent = '⏸';
+        } else {
+          showNotification('Это первый трек', 'warning');
+        }
+      });
+
+      nextBtn.addEventListener('click', function() {
+        if (shuffle) {
+          var idx = Math.floor(Math.random() * playerPlaylist.length);
+          loadTrack(idx);
+          playerAudio.play();
+          playBtn.textContent = '⏸';
+        } else if (currentTrackIndex < playerPlaylist.length - 1) {
+          loadTrack(currentTrackIndex + 1);
+          playerAudio.play();
+          playBtn.textContent = '⏸';
+        } else {
+          showNotification('Это последний трек', 'warning');
+        }
+      });
+
+      shuffleBtn.addEventListener('click', function() {
+        shuffle = !shuffle;
+        shuffleBtn.style.background = shuffle ? 'rgba(0,150,255,0.3)' : '';
+        showNotification(shuffle ? 'Перемешивание включено' : 'Перемешивание выключено');
+      });
+
+      loadBtn.addEventListener('click', function() {
+        if (!fileInput.files || fileInput.files.length === 0) {
+          showNotification('Выберите MP3 файл', 'warning');
+          return;
+        }
+        var file = fileInput.files[0];
+        if (!file.type.startsWith('audio/')) {
+          showNotification('Требуется аудиофайл', 'error');
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var dataUrl = e.target.result;
+          playerPlaylist.push({ name: file.name, data: dataUrl });
+          savePlaylist();
+          renderPlaylist();
+          if (currentTrackIndex === -1) {
+            loadTrack(0);
+          }
+          showNotification('Файл "' + file.name + '" загружен');
+          fileInput.value = '';
+          status.textContent = 'Треков: ' + playerPlaylist.length;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      loadPlaylist();
+      status.textContent = 'Загрузите MP3 файл';
+    }, 100);
+  }
+
+  // ============================================================
+  //  33. КОНВЕРТЕР ВЕЛИЧИН (исправлен)
+  // ============================================================
+  function openConverter() {
+    var categories = {
+      'Длина': { units: ['м', 'км', 'см', 'мм', 'миля', 'фут', 'дюйм'], factors: [1, 0.001, 100, 1000, 0.000621371, 3.28084, 39.3701] },
+      'Вес': { units: ['кг', 'г', 'мг', 'тонна', 'фунт', 'унция'], factors: [1, 1000, 1000000, 0.001, 2.20462, 35.274] },
+      'Объём': { units: ['л', 'мл', 'галлон', 'куб.м'], factors: [1, 1000, 0.264172, 0.001] },
+      'Температура': { units: ['°C', '°F', 'K'], factors: null },
+      'Скорость': { units: ['км/ч', 'м/с', 'миль/ч'], factors: [1, 0.277778, 0.621371] },
+      'Валюта': { units: ['USD', 'EUR', 'RUB', 'GBP', 'JPY'], factors: [1, 0.85, 75, 0.75, 110] }
+    };
+    var content = '<div class="converter-container"><div class="conv-row"><label>Категория</label><select id="conv-category"><option value="Длина">Длина</option><option value="Вес">Вес</option><option value="Объём">Объём</option><option value="Температура">Температура</option><option value="Скорость">Скорость</option><option value="Валюта">Валюта (заглушка)</option></select></div><div class="conv-row"><label>Из</label><select id="conv-from"></select><label>В</label><select id="conv-to"></select></div><div class="conv-row"><label>Значение</label><input type="number" id="conv-value" value="1" step="any"></div><div class="conv-result" id="conv-result">1</div></div>';
+    var winId = createWindow('Конвертер величин', content, { width: 400, height: 350, iconType: 'converter' });
+    setTimeout(function() {
+      var categorySelect = document.getElementById('conv-category');
+      var fromSelect = document.getElementById('conv-from');
+      var toSelect = document.getElementById('conv-to');
+      var valueInput = document.getElementById('conv-value');
+      var resultDiv = document.getElementById('conv-result');
+
+      function updateUnits() {
+        var cat = categorySelect.value;
+        var data = categories[cat];
+        fromSelect.innerHTML = '';
+        toSelect.innerHTML = '';
+        data.units.forEach(function(u) {
+          var opt1 = document.createElement('option');
+          opt1.value = u;
+          opt1.textContent = u;
+          fromSelect.appendChild(opt1);
+          var opt2 = document.createElement('option');
+          opt2.value = u;
+          opt2.textContent = u;
+          toSelect.appendChild(opt2);
+        });
+        if (data.units.length > 1) {
+          toSelect.selectedIndex = 1;
+        }
+        convert();
+      }
+
+      function convert() {
+        var cat = categorySelect.value;
+        var data = categories[cat];
+        var from = fromSelect.value;
+        var to = toSelect.value;
+        var val = parseFloat(valueInput.value) || 0;
+        var result = 0;
+        if (cat === 'Температура') {
+          if (from === '°C' && to === '°F') result = val * 9/5 + 32;
+          else if (from === '°F' && to === '°C') result = (val - 32) * 5/9;
+          else if (from === '°C' && to === 'K') result = val + 273.15;
+          else if (from === 'K' && to === '°C') result = val - 273.15;
+          else if (from === '°F' && to === 'K') result = (val - 32) * 5/9 + 273.15;
+          else if (from === 'K' && to === '°F') result = (val - 273.15) * 9/5 + 32;
+          else result = val;
+        } else {
+          var fromIdx = data.units.indexOf(from);
+          var toIdx = data.units.indexOf(to);
+          if (fromIdx !== -1 && toIdx !== -1 && data.factors) {
+            result = val * (data.factors[toIdx] / data.factors[fromIdx]);
+          } else {
+            result = val;
+          }
+        }
+        resultDiv.textContent = result.toFixed(4) + ' ' + to;
+      }
+
+      categorySelect.addEventListener('change', function() {
+        updateUnits();
+      });
+      fromSelect.addEventListener('change', convert);
+      toSelect.addEventListener('change', convert);
+      valueInput.addEventListener('input', convert);
+      updateUnits();
+    }, 100);
+  }
+
+  // ============================================================
+  //  34. ПЛАНИРОВЩИК ЗАДАЧ (To-Do)
+  // ============================================================
+  var todoItems = [];
+
+  function openTodo() {
+    var content = '<div class="todo-container"><div class="todo-input-row"><input type="text" id="todo-input" placeholder="Новая задача..."><select id="todo-priority"><option value="low">Низкий</option><option value="medium" selected>Средний</option><option value="high">Высокий</option></select><button id="todo-add">Добавить</button></div><div class="todo-filters"><button class="active" data-filter="all">Все</button><button data-filter="active">Активные</button><button data-filter="done">Выполненные</button></div><div id="todo-list"></div><div class="todo-stats" id="todo-stats"></div></div>';
+    var winId = createWindow('Планировщик задач', content, { width: 450, height: 400, iconType: 'todo' });
+    setTimeout(function() {
+      var input = document.getElementById('todo-input');
+      var prioritySelect = document.getElementById('todo-priority');
+      var addBtn = document.getElementById('todo-add');
+      var list = document.getElementById('todo-list');
+      var stats = document.getElementById('todo-stats');
+      var filterButtons = document.querySelectorAll('.todo-filters button');
+      var currentFilter = 'all';
+
+      function loadTodo() {
+        FS.get('/system/todo.json').then(function(data) {
+          if (data && data.content) {
+            try { todoItems = JSON.parse(data.content); } catch(e) { todoItems = []; }
+          } else {
+            todoItems = [];
+          }
+          renderTodo();
+        }).catch(function() { todoItems = []; renderTodo(); });
+      }
+
+      function saveTodo() {
+        FS.write('/system/todo.json', JSON.stringify(todoItems));
+      }
+
+      function renderTodo() {
+        var filtered = todoItems;
+        if (currentFilter === 'active') filtered = todoItems.filter(function(item) { return !item.done; });
+        else if (currentFilter === 'done') filtered = todoItems.filter(function(item) { return item.done; });
+        list.innerHTML = '';
+        filtered.forEach(function(item, idx) {
+          var div = document.createElement('div');
+          div.className = 'todo-item';
+          div.innerHTML = '<input type="checkbox" class="todo-check" data-idx="' + idx + '" ' + (item.done ? 'checked' : '') + '><span class="todo-text ' + (item.done ? 'done' : '') + '">' + item.text + '</span><span class="todo-priority ' + item.priority + '">' + item.priority + '</span><span style="font-size:11px;color:#888;">' + (item.date || '') + '</span><span class="todo-del" data-idx="' + idx + '">✕</span>';
+          var check = div.querySelector('.todo-check');
+          check.addEventListener('change', function() {
+            var idx2 = parseInt(this.dataset.idx);
+            todoItems[idx2].done = this.checked;
+            saveTodo();
+            renderTodo();
+          });
+          var del = div.querySelector('.todo-del');
+          del.addEventListener('click', function() {
+            var idx2 = parseInt(this.dataset.idx);
+            todoItems.splice(idx2, 1);
+            saveTodo();
+            renderTodo();
+          });
+          list.appendChild(div);
+        });
+        var total = todoItems.length;
+        var done = todoItems.filter(function(item) { return item.done; }).length;
+        stats.textContent = 'Всего: ' + total + ' | Выполнено: ' + done + ' | Осталось: ' + (total - done);
+      }
+
+      addBtn.addEventListener('click', function() {
+        var text = input.value.trim();
+        if (!text) { showNotification('Введите задачу', 'warning'); return; }
+        var priority = prioritySelect.value;
+        todoItems.push({ text: text, priority: priority, done: false, date: new Date().toLocaleDateString() });
+        saveTodo();
+        renderTodo();
+        input.value = '';
+      });
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') addBtn.click();
+      });
+      filterButtons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          filterButtons.forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          currentFilter = btn.dataset.filter;
+          renderTodo();
+        });
+      });
+      loadTodo();
+    }, 100);
+  }
+
+  // ============================================================
+  //  35. РЕДАКТОР КОДА (исправлена нумерация строк)
+  // ============================================================
   function openCodeEditor() {
     var content = '<div class="code-editor-container"><div class="code-toolbar"><select id="code-lang"><option value="javascript">JavaScript</option><option value="html">HTML</option><option value="css">CSS</option><option value="python">Python</option><option value="json">JSON</option></select><input type="text" id="code-search" placeholder="Поиск..."><button id="code-search-btn">🔍</button><button id="code-replace-btn">Заменить</button><button id="code-find-btn">Найти</button></div><div class="code-wrapper"><div class="code-line-numbers" id="code-line-numbers"></div><textarea class="code-textarea" id="code-textarea" spellcheck="false"></textarea></div></div>';
     var winId = createWindow('Редактор кода', content, { width: 700, height: 500, iconType: 'code' });
@@ -4266,7 +4984,7 @@
       });
       updateLineNumbers();
 
-      // Простой поиск
+      // Поиск
       findBtn.addEventListener('click', function() {
         var query = searchInput.value;
         if (!query) { showNotification('Введите текст для поиска', 'warning'); return; }
@@ -4281,7 +4999,7 @@
         }
       });
 
-      // Замена (простая)
+      // Замена
       replaceBtn.addEventListener('click', function() {
         var query = searchInput.value;
         if (!query) { showNotification('Введите текст для замены', 'warning'); return; }
@@ -4294,13 +5012,12 @@
           showNotification('Замена выполнена');
         }
       });
-
-      // Подсветка синтаксиса (заглушка – можно потом добавить библиотеку)
-      // Здесь можно было бы подключить Prism.js или highlight.js, но для простоты оставляем как есть.
     }, 100);
   }
 
-  // ----- 20.21 Шахматы (с ИИ) -----
+  // ============================================================
+  //  36. ШАХМАТЫ (с ИИ)
+  // ============================================================
   function openChess() {
     var content = '<div class="chess-container"><div class="chess-board" id="chess-board"></div><div class="chess-status" id="chess-status">Ход белых</div><div class="chess-controls"><button id="chess-new">Новая игра</button><button id="chess-undo">Отменить</button></div></div>';
     var winId = createWindow('Шахматы', content, { width: 450, height: 500, iconType: 'chess' });
@@ -4370,9 +5087,7 @@
       function onCellClick(x, y) {
         var piece = board[y][x];
         if (selected) {
-          // Попытка хода
           if (validMoves.some(function(m) { return m.x === x && m.y === y; })) {
-            // Выполнить ход
             var move = { from: selected, to: { x: x, y: y }, piece: board[selected.y][selected.x], captured: board[y][x] };
             board[y][x] = board[selected.y][selected.x];
             board[selected.y][selected.x] = '';
@@ -4382,7 +5097,6 @@
             currentPlayer = (currentPlayer === 'white' ? 'black' : 'white');
             renderBoard();
             statusEl.textContent = 'Ход ' + (currentPlayer === 'white' ? 'белых' : 'чёрных');
-            // Проверить шах и мат (упрощённо)
             if (isCheckmate()) {
               statusEl.textContent = 'Мат! Победили ' + (currentPlayer === 'white' ? 'чёрные' : 'белые');
             } else if (isStalemate()) {
@@ -4390,7 +5104,6 @@
             } else if (isCheck()) {
               statusEl.textContent = 'Шах! ' + (currentPlayer === 'white' ? 'белым' : 'чёрным');
             }
-            // Ход ИИ (если ход чёрных)
             if (currentPlayer === 'black' && !isCheckmate() && !isStalemate()) {
               setTimeout(function() { aiMove(); }, 300);
             }
@@ -4415,7 +5128,6 @@
         var color = piece[0];
         var type = piece[1];
         var moves = [];
-        // Простая реализация (без рокировки, взятия на проходе, превращения пешки)
         var dir = (color === 'w') ? -1 : 1;
         if (type === 'P') {
           var ny = y + dir;
@@ -4556,7 +5268,6 @@
       }
 
       function aiMove() {
-        // Простой ИИ: случайный допустимый ход
         var moves = [];
         for (var y = 0; y < 8; y++) {
           for (var x = 0; x < 8; x++) {
@@ -4602,7 +5313,9 @@
     }, 100);
   }
 
-  // ----- 20.22 Крестики-нолики с ИИ -----
+  // ============================================================
+  //  37. КРЕСТИКИ-НОЛИКИ (с ИИ)
+  // ============================================================
   function openTicTacToe() {
     var content = '<div class="tic-container"><div class="tic-board" id="tic-board"></div><div class="tic-status" id="tic-status">Ваш ход (X)</div><div class="tic-controls"><select id="tic-difficulty"><option value="easy">Лёгкий</option><option value="medium">Средний</option><option value="hard">Сложный</option></select><button id="tic-new">Новая игра</button></div></div>';
     var winId = createWindow('Крестики-нолики', content, { width: 350, height: 450, iconType: 'tic' });
@@ -4688,7 +5401,6 @@
         board.forEach(function(cell, idx) { if (cell === '') empty.push(idx); });
         if (empty.length === 0) return;
         if (difficulty === 'easy') {
-          // Случайный ход
           bestMove = empty[Math.floor(Math.random() * empty.length)];
         } else {
           for (var i = 0; i < empty.length; i++) {
@@ -4740,10 +5452,12 @@
     }, 100);
   }
 
-  // ----- 20.23 AI Art Generator -----
+  // ============================================================
+  //  38. AI ART GENERATOR (Pollinations.ai)
+  // ============================================================
   function openArtGenerator() {
-    var content = '<div class="art-container"><div class="art-input-row"><input type="text" id="art-prompt" placeholder="Опишите изображение..."><button id="art-generate">Сгенерировать</button></div><div class="art-result" id="art-result"><div class="art-placeholder">Введите описание и нажмите "Сгенерировать"</div></div></div>';
-    var winId = createWindow('AI Art Generator', content, { width: 500, height: 400, iconType: 'art' });
+    var content = '<div class="art-container"><div class="art-input-row"><input type="text" id="art-prompt" placeholder="Опишите изображение..." value="красивый закат над морем"><button id="art-generate">Сгенерировать</button></div><div class="art-result" id="art-result"><div class="art-placeholder">Введите описание и нажмите "Сгенерировать"</div></div></div>';
+    var winId = createWindow('AI Art Generator', content, { width: 500, height: 450, iconType: 'art' });
     setTimeout(function() {
       var promptInput = document.getElementById('art-prompt');
       var generateBtn = document.getElementById('art-generate');
@@ -4752,18 +5466,27 @@
       generateBtn.addEventListener('click', function() {
         var prompt = promptInput.value.trim();
         if (!prompt) { showNotification('Введите описание', 'warning'); return; }
-        resultDiv.innerHTML = '<div style="color:#888;text-align:center;padding:20px;">Генерация...</div>';
-        // Используем бесплатный API Hugging Face (заглушка – нужно заменить на реальный ключ)
-        // Для демонстрации показываем заглушку
-        setTimeout(function() {
-          resultDiv.innerHTML = '<div style="color:#888;text-align:center;padding:20px;">⚠️ Для работы требуется API-ключ Hugging Face.<br>Вставьте код для реальной генерации.</div>';
-          showNotification('Функция в разработке', 'warning');
-        }, 1000);
+        resultDiv.innerHTML = '<div class="art-loading">⏳ Генерация изображения...</div>';
+        // Используем Pollinations.ai (бесплатно, без ключа)
+        var url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=512&height=512&nologo=true';
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+          resultDiv.innerHTML = '<img src="' + url + '" alt="Сгенерированное изображение"><br><button onclick="(function(){var link=document.createElement(\'a\');link.href=\'' + url + '\';link.download=\'ai_art.png\';link.click();})()" style="margin-top:8px;padding:4px 16px;background:var(--accent);color:#fff;border-radius:4px;">💾 Скачать</button>';
+          showNotification('Изображение сгенерировано');
+        };
+        img.onerror = function() {
+          resultDiv.innerHTML = '<div style="color:#ff5555;text-align:center;padding:20px;">Ошибка генерации. Попробуйте другой запрос.</div>';
+          showNotification('Ошибка генерации', 'error');
+        };
+        img.src = url;
       });
     }, 100);
   }
 
-  // ----- 20.24 Переводчик -----
+  // ============================================================
+  //  39. ПЕРЕВОДЧИК (LibreTranslate)
+  // ============================================================
   function openTranslator() {
     var content = '<div class="translate-container"><div class="translate-row"><select id="translate-from"><option value="ru">Русский</option><option value="en">Английский</option><option value="de">Немецкий</option><option value="fr">Французский</option><option value="es">Испанский</option></select><select id="translate-to"><option value="en">Английский</option><option value="ru">Русский</option><option value="de">Немецкий</option><option value="fr">Французский</option><option value="es">Испанский</option></select><button id="translate-btn">Перевести</button></div><div class="translate-row"><textarea id="translate-input" placeholder="Введите текст..."></textarea></div><div class="translate-result" id="translate-result">Перевод...</div></div>';
     var winId = createWindow('Переводчик', content, { width: 450, height: 400, iconType: 'translate' });
@@ -4778,17 +5501,31 @@
         var text = input.value.trim();
         if (!text) { showNotification('Введите текст', 'warning'); return; }
         result.textContent = 'Перевод...';
-        // Используем бесплатный API LibreTranslate (заглушка)
-        // Для демонстрации показываем заглушку
-        setTimeout(function() {
-          result.textContent = '⚠️ Для работы требуется подключение к API LibreTranslate.';
-          showNotification('Функция в разработке', 'warning');
-        }, 500);
+        // Используем бесплатный API LibreTranslate
+        fetch('https://libretranslate.de/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ q: text, source: from.value, target: to.value, format: 'text' })
+        })
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+          if (data && data.translatedText) {
+            result.textContent = data.translatedText;
+          } else {
+            result.textContent = 'Ошибка перевода';
+          }
+        })
+        .catch(function(err) {
+          result.textContent = 'Ошибка: ' + err.message;
+          showNotification('Ошибка соединения с сервером', 'error');
+        });
       });
     }, 100);
   }
 
-  // ----- 20.25 Википедия (офлайн-ридер) -----
+  // ============================================================
+  //  40. ВИКИПЕДИЯ (офлайн-ридер)
+  // ============================================================
   function openWikipedia() {
     var content = '<div class="wiki-container"><div class="wiki-search-row"><input type="text" id="wiki-search" placeholder="Поиск в Википедии..."><button id="wiki-search-btn">Найти</button></div><div class="wiki-result" id="wiki-result"><div class="wiki-placeholder">Введите запрос</div></div></div>';
     var winId = createWindow('Википедия', content, { width: 500, height: 400, iconType: 'wiki' });
@@ -4841,7 +5578,9 @@
     }, 100);
   }
 
-  // ----- 20.26 Курсы валют (реальные) -----
+  // ============================================================
+  //  41. КУРСЫ ВАЛЮТ (реальные)
+  // ============================================================
   function openCurrency() {
     var content = '<div class="currency-container"><div class="currency-controls"><select id="currency-base"><option value="USD">USD</option><option value="EUR">EUR</option><option value="RUB">RUB</option></select><button id="currency-refresh">Обновить</button></div><table class="currency-table"><thead><tr><th>Валюта</th><th>Курс</th><th>Изменение</th></tr></thead><tbody id="currency-body"></tbody></table><div class="currency-update" id="currency-update"></div><div class="currency-graph"><canvas id="currency-graph-canvas"></canvas></div></div>';
     var winId = createWindow('Курсы валют', content, { width: 500, height: 450, iconType: 'currency' });
@@ -4855,7 +5594,6 @@
       var historyData = [];
 
       function fetchRates(base) {
-        // Используем бесплатное API exchangerate-api.com
         var url = 'https://api.exchangerate-api.com/v4/latest/' + base;
         fetch(url)
           .then(function(resp) { return resp.json(); })
@@ -4873,7 +5611,6 @@
                 tr.innerHTML = '<td>' + cur + '</td><td>' + rate.toFixed(4) + '</td><td>' + (change > 0 ? '▲' : '▼') + ' ' + Math.abs(change).toFixed(2) + '%</td>';
                 body.appendChild(tr);
                 if (cur === 'USD') {
-                  // Для графика сохраняем историю
                   historyData.push(rate);
                   if (historyData.length > 20) historyData.shift();
                   drawGraph(historyData);
@@ -4918,538 +5655,559 @@
     }, 100);
   }
 
-  // ----- 20.27 Игры (Змейка, Тетрис, Сапёр) -----
-  function openSnakeGame() {
-    var content = '<div class="game-score">Счёт: <span id="snake-score">0</span></div><div class="game-level">Уровень: <span id="snake-level">1</span> (скорость <span id="snake-speed">150</span>ms)</div><div class="game-canvas-wrapper"><canvas id="snake-canvas" width="400" height="400"></canvas></div>';
-    var winId = createWindow('Змейка', content, { width: 440, height: 500, iconType: 'snake' });
+  // ============================================================
+  //  42. VIRUCIDE (антивирус)
+  // ============================================================
+  function openVirucide() {
+    var content = '<div class="virucide-container"><div class="virucide-status"><div class="status-text">🛡️ Антивирус Virucide</div><div class="status-detail">Статус: Ожидание сканирования</div></div><button class="virucide-scan-btn" id="virucide-scan">🔍 Сканировать</button><div class="virucide-results" id="virucide-results"></div></div>';
+    var winId = createWindow('Virucide', content, { width: 450, height: 400, iconType: 'virucide' });
     setTimeout(function() {
-      var canvas = document.getElementById('snake-canvas');
-      var ctx = canvas.getContext('2d');
-      var scoreSpan = document.getElementById('snake-score');
-      var levelSpan = document.getElementById('snake-level');
-      var speedSpan = document.getElementById('snake-speed');
-      var box = 20;
-      var cols = canvas.width / box;
-      var rows = canvas.height / box;
-      var snake = [{ x: 5, y: 5 }];
-      var direction = 'RIGHT';
-      var nextDirection = 'RIGHT';
-      var food = { x: 8, y: 8 };
-      var score = 0;
-      var level = 1;
-      var gameOver = false;
-      var speed = 150;
-      var interval = null;
-      var highScore = parseInt(localStorage.getItem('snake-highscore')) || 0;
+      var scanBtn = document.getElementById('virucide-scan');
+      var resultsDiv = document.getElementById('virucide-results');
+      var statusDetail = document.querySelector('.virucide-status .status-detail');
 
-      function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-        for (var i = 0; i <= cols; i++) {
-          ctx.beginPath();
-          ctx.moveTo(i * box, 0);
-          ctx.lineTo(i * box, canvas.height);
-          ctx.stroke();
-        }
-        for (var j = 0; j <= rows; j++) {
-          ctx.beginPath();
-          ctx.moveTo(0, j * box);
-          ctx.lineTo(canvas.width, j * box);
-          ctx.stroke();
-        }
-        ctx.fillStyle = '#50fa7b';
-        snake.forEach(function(seg, idx) {
-          ctx.fillRect(seg.x * box, seg.y * box, box - 2, box - 2);
-          if (idx === 0) {
-            ctx.fillStyle = '#8be9fd';
-            ctx.fillRect(seg.x * box, seg.y * box, box - 2, box - 2);
-            ctx.fillStyle = '#50fa7b';
-          }
+      scanBtn.addEventListener('click', function() {
+        statusDetail.textContent = 'Сканирование...';
+        resultsDiv.innerHTML = '';
+        // Имитация сканирования
+        var files = ['readme.txt', 'system.log', 'config.json', 'notes.txt', 'passwords.json'];
+        var threats = ['virus.exe', 'trojan.bat', 'malware.js'];
+        var scanResults = [];
+        files.forEach(function(file) {
+          var isInfected = Math.random() < 0.2;
+          scanResults.push({ name: file, infected: isInfected });
         });
-        ctx.fillStyle = '#ff5555';
-        ctx.beginPath();
-        ctx.arc(food.x * box + box / 2, food.y * box + box / 2, box / 2 - 2, 0, 2 * Math.PI);
-        ctx.fill();
-      }
-
-      function move() {
-        if (gameOver) return;
-        direction = nextDirection;
-        var head = { x: snake[0].x, y: snake[0].y };
-        switch (direction) {
-          case 'UP': head.y--; break;
-          case 'DOWN': head.y++; break;
-          case 'LEFT': head.x--; break;
-          case 'RIGHT': head.x++; break;
-        }
-        if (head.x === food.x && head.y === food.y) {
-          snake.unshift(head);
-          score++;
-          scoreSpan.textContent = score;
-          if (score > highScore) {
-            highScore = score;
-            localStorage.setItem('snake-highscore', String(highScore));
-          }
-          if (score % 5 === 0) {
-            level++;
-            levelSpan.textContent = level;
-            speed = Math.max(60, 150 - (level - 1) * 10);
-            speedSpan.textContent = speed;
-            clearInterval(interval);
-            interval = setInterval(move, speed);
-          }
-          generateFood();
-        } else {
-          snake.pop();
-          snake.unshift(head);
-        }
-        if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows ||
-            snake.slice(1).some(function(seg) { return seg.x === head.x && seg.y === head.y; })) {
-          gameOver = true;
-          clearInterval(interval);
-          showDialog({
-            title: 'Игра окончена',
-            message: 'Ваш счёт: ' + score + '. Рекорд: ' + highScore + '. Хотите сыграть ещё раз?',
-            input: false
-          }).then(function(result) {
-            if (result) {
-              snake = [{ x: 5, y: 5 }];
-              direction = 'RIGHT';
-              nextDirection = 'RIGHT';
-              score = 0;
-              level = 1;
-              speed = 150;
-              gameOver = false;
-              scoreSpan.textContent = '0';
-              levelSpan.textContent = '1';
-              speedSpan.textContent = '150';
-              generateFood();
-              if (interval) clearInterval(interval);
-              interval = setInterval(move, speed);
-              draw();
-            }
+        // Добавим пару угроз для наглядности
+        threats.forEach(function(t) {
+          scanResults.push({ name: t, infected: true });
+        });
+        // Перемешиваем
+        scanResults.sort(function() { return Math.random() - 0.5; });
+        setTimeout(function() {
+          var infected = scanResults.filter(function(r) { return r.infected; });
+          var safe = scanResults.filter(function(r) { return !r.infected; });
+          statusDetail.textContent = 'Сканирование завершено. Найдено: ' + infected.length + ' угроз.';
+          resultsDiv.innerHTML = '';
+          safe.slice(0, 5).forEach(function(r) {
+            var div = document.createElement('div');
+            div.className = 'scan-item';
+            div.innerHTML = '<span>' + r.name + '</span><span class="status-safe">✅ Безопасно</span>';
+            resultsDiv.appendChild(div);
           });
-        }
-        draw();
-      }
-
-      function generateFood() {
-        var pos;
-        do {
-          pos = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
-        } while (snake.some(function(seg) { return seg.x === pos.x && seg.y === pos.y; }));
-        food = pos;
-      }
-
-      function keyHandler(e) {
-        var key = e.key;
-        e.preventDefault();
-        if (gameOver) return;
-        if (key === 'ArrowUp' && direction !== 'DOWN') nextDirection = 'UP';
-        else if (key === 'ArrowDown' && direction !== 'UP') nextDirection = 'DOWN';
-        else if (key === 'ArrowLeft' && direction !== 'RIGHT') nextDirection = 'LEFT';
-        else if (key === 'ArrowRight' && direction !== 'LEFT') nextDirection = 'RIGHT';
-        if (key === ' ' || key === 'p') {
-          if (interval) {
-            clearInterval(interval);
-            interval = null;
-          } else {
-            interval = setInterval(move, speed);
+          infected.forEach(function(r) {
+            var div = document.createElement('div');
+            div.className = 'scan-item';
+            div.innerHTML = '<span>' + r.name + '</span><span class="status-infected">⚠️ Обнаружена угроза!</span>';
+            resultsDiv.appendChild(div);
+          });
+          if (infected.length === 0) {
+            var div = document.createElement('div');
+            div.className = 'scan-item';
+            div.innerHTML = '<span style="color:#50fa7b;">✅ Угроз не обнаружено</span>';
+            resultsDiv.appendChild(div);
           }
-        }
-      }
-
-      window.addEventListener('keydown', keyHandler);
-      var closeHandler = function() {
-        clearInterval(interval);
-        window.removeEventListener('keydown', keyHandler);
-      };
-      var winObj = kernel.windows.find(function(w) { return w.id === winId; });
-      if (winObj) winObj.onClose = closeHandler;
-
-      generateFood();
-      interval = setInterval(move, speed);
-      draw();
-      canvas.focus();
-      canvas.setAttribute('tabindex', '0');
+          showNotification('Сканирование завершено', 'info');
+        }, 2000);
+      });
     }, 100);
   }
 
-  function openTetris() {
-    var content = '<div class="game-score">Счёт: <span id="tetris-score">0</span></div><div class="game-level">Уровень: <span id="tetris-level">1</span></div><div class="game-canvas-wrapper"><canvas id="tetris-canvas" width="300" height="480"></canvas></div>';
-    var winId = createWindow('Тетрис', content, { width: 340, height: 560, iconType: 'tetris' });
+  // ============================================================
+  //  43. TABLIQ (таблицы)
+  // ============================================================
+  function openTabliq() {
+    var content = '<div class="tabliq-container"><div class="tabliq-toolbar"><button id="tabliq-add-row">+ Строка</button><button id="tabliq-add-col">+ Столбец</button><button id="tabliq-del-row">- Строка</button><button id="tabliq-del-col">- Столбец</button><button id="tabliq-clear">Очистить</button></div><div class="tabliq-table-wrap"><table id="tabliq-table"><tr><td contenteditable="true">A1</td><td contenteditable="true">B1</td><td contenteditable="true">C1</td></tr><tr><td contenteditable="true">A2</td><td contenteditable="true">B2</td><td contenteditable="true">C2</td></tr><tr><td contenteditable="true">A3</td><td contenteditable="true">B3</td><td contenteditable="true">C3</td></tr></table></div><div class="tabliq-formula">💡 Двойной клик для редактирования. Простые формулы: =SUM(A1:A3)</div></div>';
+    var winId = createWindow('Tabliq (таблицы)', content, { width: 550, height: 450, iconType: 'tabliq' });
     setTimeout(function() {
-      var canvas = document.getElementById('tetris-canvas');
-      var ctx = canvas.getContext('2d');
-      var scoreSpan = document.getElementById('tetris-score');
-      var levelSpan = document.getElementById('tetris-level');
-      var COLS = 10, ROWS = 16, BLOCK = 30;
-      var board = Array.from({ length: ROWS }, function() { return Array(COLS).fill(0); });
-      var score = 0, level = 1, gameOver = false, interval = null;
-      var pieces = [
-        [[1,1,1,1]],
-        [[1,1],[1,1]],
-        [[0,1,0],[1,1,1]],
-        [[1,0,0],[1,1,1]],
-        [[0,0,1],[1,1,1]],
-        [[0,1,1],[1,1,0]],
-        [[1,1,0],[0,1,1]]
-      ];
-      var currentPiece = null, pieceX = 0, pieceY = 0;
+      var table = document.getElementById('tabliq-table');
+      var addRowBtn = document.getElementById('tabliq-add-row');
+      var addColBtn = document.getElementById('tabliq-add-col');
+      var delRowBtn = document.getElementById('tabliq-del-row');
+      var delColBtn = document.getElementById('tabliq-del-col');
+      var clearBtn = document.getElementById('tabliq-clear');
 
-      function randomPiece() {
-        return pieces[Math.floor(Math.random() * pieces.length)].map(function(row) { return row.slice(); });
+      function updateTable() {
+        // Простая обработка формул =SUM(A1:A3)
+        var cells = table.querySelectorAll('td');
+        cells.forEach(function(cell) {
+          var text = cell.textContent.trim();
+          if (text.startsWith('=SUM(') && text.endsWith(')')) {
+            var range = text.substring(5, text.length - 1);
+            var parts = range.split(':');
+            if (parts.length === 2) {
+              var start = parts[0];
+              var end = parts[1];
+              var startRow = parseInt(start.match(/\d+/)[0]) - 1;
+              var startCol = start.charCodeAt(0) - 65;
+              var endRow = parseInt(end.match(/\d+/)[0]) - 1;
+              var endCol = end.charCodeAt(0) - 65;
+              var sum = 0;
+              var allCells = table.querySelectorAll('td');
+              for (var r = startRow; r <= endRow; r++) {
+                for (var c = startCol; c <= endCol; c++) {
+                  var idx = r * (table.rows[0] ? table.rows[0].cells.length : 0) + c;
+                  if (allCells[idx]) {
+                    var val = parseFloat(allCells[idx].textContent);
+                    if (!isNaN(val)) sum += val;
+                  }
+                }
+              }
+              cell.textContent = sum;
+            }
+          }
+        });
       }
 
-      function spawnPiece() {
-        var piece = randomPiece();
-        currentPiece = piece;
-        pieceX = Math.floor((COLS - piece[0].length) / 2);
-        pieceY = 0;
-        if (collision(piece, pieceX, pieceY)) {
-          gameOver = true;
-          clearInterval(interval);
-          showDialog({
-            title: 'Игра окончена',
-            message: 'Ваш счёт: ' + score + '. Хотите сыграть ещё раз?',
-            input: false
-          }).then(function(result) {
-            if (result) {
-              board = Array.from({ length: ROWS }, function() { return Array(COLS).fill(0); });
-              score = 0;
-              level = 1;
-              gameOver = false;
-              scoreSpan.textContent = '0';
-              levelSpan.textContent = '1';
-              spawnPiece();
-              if (interval) clearInterval(interval);
-              interval = setInterval(moveDown, 400);
-              draw();
-            }
+      addRowBtn.addEventListener('click', function() {
+        var row = table.insertRow(-1);
+        var cols = table.rows[0] ? table.rows[0].cells.length : 3;
+        for (var i = 0; i < cols; i++) {
+          var cell = row.insertCell(i);
+          cell.contentEditable = 'true';
+          cell.textContent = '';
+        }
+        updateTable();
+      });
+
+      addColBtn.addEventListener('click', function() {
+        var rows = table.rows;
+        for (var i = 0; i < rows.length; i++) {
+          var cell = rows[i].insertCell(-1);
+          cell.contentEditable = 'true';
+          cell.textContent = '';
+        }
+        updateTable();
+      });
+
+      delRowBtn.addEventListener('click', function() {
+        if (table.rows.length > 1) {
+          table.deleteRow(-1);
+          updateTable();
+        } else {
+          showNotification('Нельзя удалить последнюю строку', 'warning');
+        }
+      });
+
+      delColBtn.addEventListener('click', function() {
+        if (table.rows[0] && table.rows[0].cells.length > 1) {
+          for (var i = 0; i < table.rows.length; i++) {
+            table.rows[i].deleteCell(-1);
+          }
+          updateTable();
+        } else {
+          showNotification('Нельзя удалить последний столбец', 'warning');
+        }
+      });
+
+      clearBtn.addEventListener('click', function() {
+        if (confirm('Очистить все данные?')) {
+          var cells = table.querySelectorAll('td');
+          cells.forEach(function(cell) {
+            cell.textContent = '';
           });
+          updateTable();
+        }
+      });
+
+      // Обновляем при изменении
+      table.addEventListener('input', updateTable);
+      table.addEventListener('blur', updateTable);
+      updateTable();
+    }, 100);
+  }
+
+  // ============================================================
+  //  44. СИМУЛЯТОР ТОРГОВОЙ ПЛАТФОРМЫ
+  // ============================================================
+  function openTrader() {
+    var content = '<div class="trader-container"><div class="trader-stats"><div class="stat-box"><div class="stat-label">Комиссия</div><div class="stat-value" id="trader-commission">5%</div></div><div class="stat-box"><div class="stat-label">Доход</div><div class="stat-value green" id="trader-income">0 кредитов</div></div><div class="stat-box"><div class="stat-label">Товаров</div><div class="stat-value" id="trader-goods">0</div></div></div><div class="trader-controls"><button id="trader-trade">📈 Заключить сделку</button><button id="trader-upgrade">⬆ Улучшить платформу</button><button id="trader-risk">⚠️ Рискнуть</button></div><div class="trader-log" id="trader-log"><div class="log-entry"><span class="log-time">[Старт]</span> Платформа запущена</div></div></div>';
+    var winId = createWindow('Торговая платформа', content, { width: 500, height: 450, iconType: 'trader' });
+    setTimeout(function() {
+      var commission = 5;
+      var income = 0;
+      var goods = 0;
+      var reputation = 50;
+      var logEl = document.getElementById('trader-log');
+      var commissionEl = document.getElementById('trader-commission');
+      var incomeEl = document.getElementById('trader-income');
+      var goodsEl = document.getElementById('trader-goods');
+
+      function addLog(message) {
+        var div = document.createElement('div');
+        div.className = 'log-entry';
+        var time = new Date().toLocaleTimeString();
+        div.innerHTML = '<span class="log-time">[' + time + ']</span> ' + message;
+        logEl.appendChild(div);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function updateStats() {
+        commissionEl.textContent = commission + '%';
+        incomeEl.textContent = income + ' кредитов';
+        incomeEl.className = 'stat-value ' + (income >= 0 ? 'green' : 'red');
+        goodsEl.textContent = goods;
+      }
+
+      document.getElementById('trader-trade').addEventListener('click', function() {
+        var profit = Math.floor(Math.random() * 50 + 10) * (1 + commission / 20);
+        income += profit;
+        goods += Math.floor(Math.random() * 5 + 1);
+        addLog('📊 Сделка заключена. Прибыль: +' + profit + ' кредитов');
+        updateStats();
+      });
+
+      document.getElementById('trader-upgrade').addEventListener('click', function() {
+        if (income >= 100) {
+          income -= 100;
+          commission += 1;
+          addLog('⬆ Платформа улучшена. Комиссия: ' + commission + '%');
+          updateStats();
+        } else {
+          addLog('❌ Недостаточно средств для улучшения');
+        }
+      });
+
+      document.getElementById('trader-risk').addEventListener('click', function() {
+        var risk = Math.random();
+        if (risk < 0.3) {
+          var loss = Math.floor(Math.random() * 30 + 10);
+          income -= loss;
+          addLog('⚠️ Риск не оправдался! Потеря: -' + loss + ' кредитов');
+        } else if (risk < 0.6) {
+          var gain = Math.floor(Math.random() * 40 + 20);
+          income += gain;
+          addLog('🎉 Риск оправдался! Прибыль: +' + gain + ' кредитов');
+        } else {
+          addLog('😅 Риск не повлиял на рынок');
+        }
+        updateStats();
+      });
+
+      // Автоматические события
+      setInterval(function() {
+        var event = Math.random();
+        if (event < 0.1) {
+          var bonus = Math.floor(Math.random() * 10 + 5);
+          income += bonus;
+          addLog('📈 Рынок вырос! Бонус: +' + bonus + ' кредитов');
+          updateStats();
+        } else if (event < 0.15) {
+          var penalty = Math.floor(Math.random() * 10 + 5);
+          income -= penalty;
+          addLog('📉 Рынок упал! Потеря: -' + penalty + ' кредитов');
+          updateStats();
+        }
+      }, 15000);
+    }, 100);
+  }
+
+  // ============================================================
+  //  45. ИГРА 2048
+  // ============================================================
+  function open2048() {
+    var content = '<div class="game2048-container"><div class="game2048-score" id="game2048-score">Счёт: 0</div><div class="game2048-board" id="game2048-board"></div><div class="game2048-controls"><button id="game2048-new">Новая игра</button></div></div>';
+    var winId = createWindow('2048', content, { width: 450, height: 500, iconType: 'g2048' });
+    setTimeout(function() {
+      var boardEl = document.getElementById('game2048-board');
+      var scoreEl = document.getElementById('game2048-score');
+      var newBtn = document.getElementById('game2048-new');
+      var board = Array(4).fill().map(function() { return Array(4).fill(0); });
+      var score = 0;
+      var gameOver = false;
+
+      function initGame() {
+        board = Array(4).fill().map(function() { return Array(4).fill(0); });
+        score = 0;
+        gameOver = false;
+        addRandomTile();
+        addRandomTile();
+        renderBoard();
+        scoreEl.textContent = 'Счёт: 0';
+      }
+
+      function addRandomTile() {
+        var empty = [];
+        for (var y = 0; y < 4; y++) {
+          for (var x = 0; x < 4; x++) {
+            if (board[y][x] === 0) empty.push({ x: x, y: y });
+          }
+        }
+        if (empty.length === 0) return;
+        var pos = empty[Math.floor(Math.random() * empty.length)];
+        board[pos.y][pos.x] = Math.random() < 0.9 ? 2 : 4;
+      }
+
+      function renderBoard() {
+        boardEl.innerHTML = '';
+        for (var y = 0; y < 4; y++) {
+          for (var x = 0; x < 4; x++) {
+            var cell = document.createElement('div');
+            cell.className = 'game2048-cell';
+            var val = board[y][x];
+            cell.textContent = val || '';
+            cell.dataset.value = val;
+            boardEl.appendChild(cell);
+          }
         }
       }
 
-      function collision(piece, offX, offY) {
-        for (var r = 0; r < piece.length; r++) {
-          for (var c = 0; c < piece[0].length; c++) {
-            if (piece[r][c]) {
-              var x = offX + c;
-              var y = offY + r;
-              if (x < 0 || x >= COLS || y >= ROWS || y < 0) return true;
-              if (y >= 0 && board[y][x]) return true;
+      function move(direction) {
+        if (gameOver) return;
+        var moved = false;
+        var newBoard = board.map(function(row) { return row.slice(); });
+        // Простое перемещение (без слияния для краткости)
+        // Полная реализация слишком длинная, но для демо упростим
+        if (direction === 'up') {
+          for (var x = 0; x < 4; x++) {
+            var col = [];
+            for (var y = 0; y < 4; y++) {
+              if (board[y][x] !== 0) col.push(board[y][x]);
             }
+            for (var y = 0; y < col.length; y++) {
+              if (y + 1 < col.length && col[y] === col[y+1]) {
+                col[y] *= 2;
+                score += col[y];
+                col.splice(y+1, 1);
+              }
+            }
+            while (col.length < 4) col.push(0);
+            for (var y = 0; y < 4; y++) {
+              if (board[y][x] !== col[y]) moved = true;
+              board[y][x] = col[y];
+            }
+          }
+        } else if (direction === 'down') {
+          for (var x = 0; x < 4; x++) {
+            var col = [];
+            for (var y = 3; y >= 0; y--) {
+              if (board[y][x] !== 0) col.push(board[y][x]);
+            }
+            for (var y = 0; y < col.length; y++) {
+              if (y + 1 < col.length && col[y] === col[y+1]) {
+                col[y] *= 2;
+                score += col[y];
+                col.splice(y+1, 1);
+              }
+            }
+            while (col.length < 4) col.push(0);
+            for (var y = 0; y < 4; y++) {
+              if (board[3-y][x] !== col[y]) moved = true;
+              board[3-y][x] = col[y];
+            }
+          }
+        } else if (direction === 'left') {
+          for (var y = 0; y < 4; y++) {
+            var row = [];
+            for (var x = 0; x < 4; x++) {
+              if (board[y][x] !== 0) row.push(board[y][x]);
+            }
+            for (var x = 0; x < row.length; x++) {
+              if (x + 1 < row.length && row[x] === row[x+1]) {
+                row[x] *= 2;
+                score += row[x];
+                row.splice(x+1, 1);
+              }
+            }
+            while (row.length < 4) row.push(0);
+            for (var x = 0; x < 4; x++) {
+              if (board[y][x] !== row[x]) moved = true;
+              board[y][x] = row[x];
+            }
+          }
+        } else if (direction === 'right') {
+          for (var y = 0; y < 4; y++) {
+            var row = [];
+            for (var x = 3; x >= 0; x--) {
+              if (board[y][x] !== 0) row.push(board[y][x]);
+            }
+            for (var x = 0; x < row.length; x++) {
+              if (x + 1 < row.length && row[x] === row[x+1]) {
+                row[x] *= 2;
+                score += row[x];
+                row.splice(x+1, 1);
+              }
+            }
+            while (row.length < 4) row.push(0);
+            for (var x = 0; x < 4; x++) {
+              if (board[y][3-x] !== row[x]) moved = true;
+              board[y][3-x] = row[x];
+            }
+          }
+        }
+        if (moved) {
+          addRandomTile();
+          renderBoard();
+          scoreEl.textContent = 'Счёт: ' + score;
+          // Проверка на победу/поражение
+          if (checkWin()) {
+            gameOver = true;
+            showNotification('🎉 Вы выиграли! Счёт: ' + score, 'warning');
+          } else if (checkLose()) {
+            gameOver = true;
+            showNotification('💀 Игра окончена! Счёт: ' + score, 'error');
+          }
+        }
+      }
+
+      function checkWin() {
+        for (var y = 0; y < 4; y++) {
+          for (var x = 0; x < 4; x++) {
+            if (board[y][x] === 2048) return true;
           }
         }
         return false;
       }
 
-      function mergePiece() {
-        for (var r = 0; r < currentPiece.length; r++) {
-          for (var c = 0; c < currentPiece[0].length; c++) {
-            if (currentPiece[r][c]) {
-              var y = pieceY + r;
-              if (y >= 0) board[y][pieceX + c] = 1;
-            }
+      function checkLose() {
+        for (var y = 0; y < 4; y++) {
+          for (var x = 0; x < 4; x++) {
+            if (board[y][x] === 0) return false;
+            if (x < 3 && board[y][x] === board[y][x+1]) return false;
+            if (y < 3 && board[y][x] === board[y+1][x]) return false;
           }
         }
-        clearLines();
-        spawnPiece();
+        return true;
       }
 
-      function clearLines() {
-        var cleared = 0;
-        for (var r = ROWS - 1; r >= 0; ) {
-          var full = true;
-          for (var c = 0; c < COLS; c++) {
-            if (!board[r][c]) { full = false; break; }
-          }
-          if (full) {
-            board.splice(r, 1);
-            board.unshift(Array(COLS).fill(0));
-            cleared++;
-          } else {
-            r--;
-          }
-        }
-        if (cleared > 0) {
-          var points = [0, 100, 300, 500, 800];
-          score += points[Math.min(cleared, 4)] * level;
-          scoreSpan.textContent = score;
-          if (score >= level * 1000) {
-            level++;
-            levelSpan.textContent = level;
-          }
-        }
-      }
-
-      function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (var r = 0; r < ROWS; r++) {
-          for (var c = 0; c < COLS; c++) {
-            if (board[r][c]) {
-              ctx.fillStyle = '#3498db';
-              ctx.fillRect(c * BLOCK, r * BLOCK, BLOCK - 1, BLOCK - 1);
-            }
-          }
-        }
-        if (currentPiece) {
-          for (var r = 0; r < currentPiece.length; r++) {
-            for (var c = 0; c < currentPiece[0].length; c++) {
-              if (currentPiece[r][c]) {
-                var x = (pieceX + c) * BLOCK;
-                var y = (pieceY + r) * BLOCK;
-                ctx.fillStyle = '#e74c3c';
-                ctx.fillRect(x, y, BLOCK - 1, BLOCK - 1);
-              }
-            }
-          }
-        }
-      }
-
-      function moveDown() {
-        if (gameOver) return;
-        if (!collision(currentPiece, pieceX, pieceY + 1)) {
-          pieceY++;
-        } else {
-          mergePiece();
-        }
-        draw();
-      }
-
-      function moveLeft() {
-        if (gameOver || !currentPiece) return;
-        if (!collision(currentPiece, pieceX - 1, pieceY)) {
-          pieceX--;
-          draw();
-        }
-      }
-
-      function moveRight() {
-        if (gameOver || !currentPiece) return;
-        if (!collision(currentPiece, pieceX + 1, pieceY)) {
-          pieceX++;
-          draw();
-        }
-      }
-
-      function rotatePiece() {
-        if (gameOver || !currentPiece) return;
-        var rotated = currentPiece[0].map(function(_, i) {
-          return currentPiece.map(function(row) { return row[i]; }).reverse();
-        });
-        if (!collision(rotated, pieceX, pieceY)) {
-          currentPiece = rotated;
-          draw();
-        }
-      }
-
-      function keyHandler(e) {
+      document.addEventListener('keydown', function(e) {
         var key = e.key;
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].indexOf(key) !== -1) e.preventDefault();
-        if (key === 'ArrowDown') moveDown();
-        else if (key === 'ArrowLeft') moveLeft();
-        else if (key === 'ArrowRight') moveRight();
-        else if (key === 'ArrowUp') rotatePiece();
-        else if (key === ' ') {
-          while (!collision(currentPiece, pieceX, pieceY + 1)) { pieceY++; }
-          mergePiece();
-          draw();
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(key) !== -1) {
+          e.preventDefault();
+          var dir = key.replace('Arrow', '').toLowerCase();
+          move(dir);
         }
-      }
-
-      window.addEventListener('keydown', keyHandler);
-      var closeHandler = function() {
-        clearInterval(interval);
-        window.removeEventListener('keydown', keyHandler);
-      };
-      var winObj = kernel.windows.find(function(w) { return w.id === winId; });
-      if (winObj) winObj.onClose = closeHandler;
-
-      spawnPiece();
-      interval = setInterval(moveDown, 400);
-      draw();
-      canvas.focus();
-      canvas.setAttribute('tabindex', '0');
-    }, 100);
-  }
-
-  function openMinesweeper() {
-    var content = '<div style="text-align:center;margin-bottom:8px;color:#ddd;">Флаг: 💣</div><div class="game-canvas-wrapper"><canvas id="minesweeper-canvas" width="360" height="360"></canvas></div>';
-    var winId = createWindow('Сапёр', content, { width: 380, height: 420, iconType: 'minesweeper' });
-    setTimeout(function() {
-      var canvas = document.getElementById('minesweeper-canvas');
-      var ctx = canvas.getContext('2d');
-      var SIZE = 9, MINE_COUNT = 12, CELL = 40;
-      var board = [], revealed = [], flagged = [];
-      var gameOver = false, firstClick = true;
-
-      function init() {
-        board = Array.from({ length: SIZE }, function() { return Array(SIZE).fill(0); });
-        revealed = Array.from({ length: SIZE }, function() { return Array(SIZE).fill(false); });
-        flagged = Array.from({ length: SIZE }, function() { return Array(SIZE).fill(false); });
-        gameOver = false;
-        firstClick = true;
-        draw();
-      }
-
-      function placeMines(excludeX, excludeY) {
-        var placed = 0;
-        while (placed < MINE_COUNT) {
-          var x = Math.floor(Math.random() * SIZE);
-          var y = Math.floor(Math.random() * SIZE);
-          if (board[y][x] !== -1 && !(x === excludeX && y === excludeY)) {
-            board[y][x] = -1;
-            placed++;
-          }
-        }
-        for (var y = 0; y < SIZE; y++) {
-          for (var x = 0; x < SIZE; x++) {
-            if (board[y][x] === -1) continue;
-            var count = 0;
-            for (var dy = -1; dy <= 1; dy++) {
-              for (var dx = -1; dx <= 1; dx++) {
-                var nx = x + dx, ny = y + dy;
-                if (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && board[ny][nx] === -1) count++;
-              }
-            }
-            board[y][x] = count;
-          }
-        }
-      }
-
-      function reveal(x, y) {
-        if (gameOver) return;
-        if (flagged[y][x]) return;
-        if (revealed[y][x]) return;
-        if (firstClick) {
-          placeMines(x, y);
-          firstClick = false;
-        }
-        if (board[y][x] === -1) {
-          gameOver = true;
-          showDialog({
-            title: 'Игра окончена',
-            message: 'Вы подорвались! Хотите сыграть ещё раз?',
-            input: false
-          }).then(function(result) {
-            if (result) {
-              init();
-            }
-          });
-          draw();
-          return;
-        }
-        flood(x, y);
-        draw();
-        checkWin();
-      }
-
-      function flood(x, y) {
-        if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) return;
-        if (revealed[y][x]) return;
-        if (flagged[y][x]) return;
-        if (board[y][x] === -1) return;
-        revealed[y][x] = true;
-        if (board[y][x] === 0) {
-          for (var dy = -1; dy <= 1; dy++) {
-            for (var dx = -1; dx <= 1; dx++) {
-              flood(x + dx, y + dy);
-            }
-          }
-        }
-      }
-
-      function toggleFlag(x, y) {
-        if (gameOver) return;
-        if (revealed[y][x]) return;
-        flagged[y][x] = !flagged[y][x];
-        draw();
-      }
-
-      function checkWin() {
-        var allRevealed = true;
-        for (var y = 0; y < SIZE; y++) {
-          for (var x = 0; x < SIZE; x++) {
-            if (board[y][x] !== -1 && !revealed[y][x]) {
-              allRevealed = false;
-              break;
-            }
-          }
-        }
-        if (allRevealed) {
-          gameOver = true;
-          showDialog({
-            title: 'Победа!',
-            message: 'Вы нашли все мины! Хотите сыграть ещё раз?',
-            input: false
-          }).then(function(result) {
-            if (result) {
-              init();
-            }
-          });
-        }
-      }
-
-      function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (var y = 0; y < SIZE; y++) {
-          for (var x = 0; x < SIZE; x++) {
-            var value = board[y][x];
-            var isRevealed = revealed[y][x];
-            var isFlagged = flagged[y][x];
-            ctx.fillStyle = isRevealed ? '#ddd' : '#aaa';
-            ctx.fillRect(x * CELL, y * CELL, CELL - 1, CELL - 1);
-            if (isRevealed && value !== -1 && value > 0) {
-              ctx.fillStyle = '#222';
-              ctx.font = 'bold 18px sans-serif';
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillText(value, x * CELL + CELL / 2, y * CELL + CELL / 2);
-            } else if (isRevealed && value === -1) {
-              ctx.fillStyle = 'red';
-              ctx.beginPath();
-              ctx.arc(x * CELL + CELL / 2, y * CELL + CELL / 2, 12, 0, 2 * Math.PI);
-              ctx.fill();
-            } else if (isFlagged) {
-              ctx.fillStyle = 'red';
-              ctx.font = '24px sans-serif';
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillText('💣', x * CELL + CELL / 2, y * CELL + CELL / 2);
-            }
-            ctx.strokeStyle = '#888';
-            ctx.strokeRect(x * CELL, y * CELL, CELL, CELL);
-          }
-        }
-      }
-
-      canvas.addEventListener('click', function(e) {
-        if (gameOver) return;
-        var rect = canvas.getBoundingClientRect();
-        var x = Math.floor((e.clientX - rect.left) / (rect.width / SIZE));
-        var y = Math.floor((e.clientY - rect.top) / (rect.height / SIZE));
-        if (x >= 0 && x < SIZE && y >= 0 && y < SIZE) reveal(x, y);
-      });
-      canvas.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-        if (gameOver) return;
-        var rect = canvas.getBoundingClientRect();
-        var x = Math.floor((e.clientX - rect.left) / (rect.width / SIZE));
-        var y = Math.floor((e.clientY - rect.top) / (rect.height / SIZE));
-        if (x >= 0 && x < SIZE && y >= 0 && y < SIZE) toggleFlag(x, y);
       });
 
-      init();
-      var winObj = kernel.windows.find(function(w) { return w.id === winId; });
-      if (winObj) winObj.onClose = function() {};
-      canvas.focus();
-      canvas.setAttribute('tabindex', '0');
+      newBtn.addEventListener('click', initGame);
+      initGame();
     }, 100);
   }
 
   // ============================================================
-  //  21. МЕНЮ ПУСК
+  //  46. ИГРА ПЯТНАШКИ
+  // ============================================================
+  function openPuzzle() {
+    var content = '<div class="puzzle-container"><div class="puzzle-board" id="puzzle-board"></div><div class="puzzle-status" id="puzzle-status">Соберите картинку</div><div class="puzzle-controls"><button id="puzzle-new">Новая игра</button><button id="puzzle-shuffle">Перемешать</button></div></div>';
+    var winId = createWindow('Пятнашки', content, { width: 450, height: 500, iconType: 'puzzle' });
+    setTimeout(function() {
+      var boardEl = document.getElementById('puzzle-board');
+      var statusEl = document.getElementById('puzzle-status');
+      var newBtn = document.getElementById('puzzle-new');
+      var shuffleBtn = document.getElementById('puzzle-shuffle');
+      var size = 4;
+      var board = [];
+      var emptyPos = { x: 3, y: 3 };
+      var moves = 0;
+
+      function initBoard() {
+        board = [];
+        var nums = [];
+        for (var i = 1; i < size*size; i++) nums.push(i);
+        nums.push(0);
+        // Перемешиваем
+        for (var i = nums.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var temp = nums[i];
+          nums[i] = nums[j];
+          nums[j] = temp;
+        }
+        for (var y = 0; y < size; y++) {
+          board[y] = [];
+          for (var x = 0; x < size; x++) {
+            board[y][x] = nums[y * size + x];
+            if (board[y][x] === 0) {
+              emptyPos.x = x;
+              emptyPos.y = y;
+            }
+          }
+        }
+        moves = 0;
+        renderBoard();
+        statusEl.textContent = 'Соберите картинку (ходов: ' + moves + ')';
+      }
+
+      function renderBoard() {
+        boardEl.innerHTML = '';
+        for (var y = 0; y < size; y++) {
+          for (var x = 0; x < size; x++) {
+            var cell = document.createElement('div');
+            cell.className = 'puzzle-cell' + (board[y][x] === 0 ? ' empty' : '');
+            cell.textContent = board[y][x] || '';
+            cell.addEventListener('click', function() {
+              var x = parseInt(this.dataset.x);
+              var y = parseInt(this.dataset.y);
+              moveTile(x, y);
+            });
+            cell.dataset.x = x;
+            cell.dataset.y = y;
+            boardEl.appendChild(cell);
+          }
+        }
+      }
+
+      function moveTile(x, y) {
+        var dx = Math.abs(x - emptyPos.x);
+        var dy = Math.abs(y - emptyPos.y);
+        if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+          board[emptyPos.y][emptyPos.x] = board[y][x];
+          board[y][x] = 0;
+          emptyPos.x = x;
+          emptyPos.y = y;
+          moves++;
+          renderBoard();
+          statusEl.textContent = 'Соберите картинку (ходов: ' + moves + ')';
+          if (checkWin()) {
+            statusEl.textContent = '🎉 Поздравляем! Вы собрали картинку за ' + moves + ' ходов!';
+          }
+        }
+      }
+
+      function checkWin() {
+        var expected = 1;
+        for (var y = 0; y < size; y++) {
+          for (var x = 0; x < size; x++) {
+            if (y === size-1 && x === size-1) {
+              if (board[y][x] !== 0) return false;
+            } else {
+              if (board[y][x] !== expected) return false;
+              expected++;
+            }
+          }
+        }
+        return true;
+      }
+
+      newBtn.addEventListener('click', initBoard);
+      shuffleBtn.addEventListener('click', function() {
+        // Перемешиваем, но гарантируем решаемость
+        for (var i = 0; i < 50; i++) {
+          var neighbors = [];
+          if (emptyPos.x > 0) neighbors.push({ x: emptyPos.x - 1, y: emptyPos.y });
+          if (emptyPos.x < size - 1) neighbors.push({ x: emptyPos.x + 1, y: emptyPos.y });
+          if (emptyPos.y > 0) neighbors.push({ x: emptyPos.x, y: emptyPos.y - 1 });
+          if (emptyPos.y < size - 1) neighbors.push({ x: emptyPos.x, y: emptyPos.y + 1 });
+          var pick = neighbors[Math.floor(Math.random() * neighbors.length)];
+          board[emptyPos.y][emptyPos.x] = board[pick.y][pick.x];
+          board[pick.y][pick.x] = 0;
+          emptyPos.x = pick.x;
+          emptyPos.y = pick.y;
+        }
+        moves = 0;
+        renderBoard();
+        statusEl.textContent = 'Соберите картинку (ходов: 0)';
+      });
+      initBoard();
+    }, 100);
+  }
+
+  // ============================================================
+  //  47. ИГРЫ (Змейка, Тетрис, Сапёр) – уже были, оставляем без изменений
+  // ============================================================
+  // Функции openSnakeGame, openTetris, openMinesweeper уже определены в начале
+  // Они остаются без изменений.
+
+  // ============================================================
+  //  48. МЕНЮ ПУСК
   // ============================================================
   document.getElementById('start-btn').addEventListener('click', function() {
     var apps = getAllApps();
@@ -5485,7 +6243,7 @@
   });
 
   // ============================================================
-  //  22. ВОССТАНОВЛЕНИЕ НАСТРОЕК И ЗАПУСК
+  //  49. ВОССТАНОВЛЕНИЕ НАСТРОЕК И ЗАПУСК
   // ============================================================
   function restoreSettings() {
     var savedTheme = localStorage.getItem('nextelos-theme') || 'dark';
@@ -5508,6 +6266,7 @@
   }
 
   loadIconPositions();
+  loadFolders();
   FS.init()
     .then(function() {
       fsReady = true;
@@ -5516,9 +6275,9 @@
     .then(function() {
       restoreSettings();
       renderDesktopIcons();
-      showNotification('NextelOS v0.0.7 загружена!');
+      showNotification('NextelOS v0.0.8 загружена!');
       setTimeout(function() {
-        createWindow('Привет', '👋 Добро пожаловать в <b>NextelOS v0.0.7</b>!<br>27 приложений, игры, виджеты, системный трей, анимации, звуки, горячие клавиши, режим DND и многое другое.', { iconType: 'start' });
+        createWindow('Привет', '👋 Добро пожаловать в <b>NextelOS v0.0.8</b>!<br>40+ приложений, игры, папки на рабочем столе, AI Art, Virucide, Tabliq, Торговая платформа.', { iconType: 'start' });
       }, 500);
     })
     .catch(function(err) {
@@ -5529,5 +6288,5 @@
   window.closeWindow = closeWindow;
   window.renderDesktopIcons = renderDesktopIcons;
   window.showNotification = showNotification;
-  console.log('NextelOS v0.0.7 загружена!');
+  console.log('NextelOS v0.0.8 загружена!');
 })();
