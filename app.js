@@ -1,12 +1,12 @@
 // ============================================================
-//  NextelOS v0.0.5 – Полный JavaScript
+//  NextelOS v0.0.6 – Полный JavaScript (все функции)
 // ============================================================
 
 (function() {
   "use strict";
 
   // ============================================================
-  //  1. SVG-ИКОНКИ (все иконки системы)
+  //  1. SVG-ИКОНКИ
   // ============================================================
   function iconSVG(type, className) {
     className = className || '';
@@ -34,12 +34,12 @@
       case 'network': inner = '<path d="M4 16l4-4 4 4M8 12l4-4 4 4M12 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'; break;
       case 'battery': inner = '<rect x="3" y="6" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M21 10v4" fill="none" stroke="currentColor" stroke-width="2"/><rect x="5" y="8" width="12" height="8" rx="1" fill="currentColor"/>'; break;
       case 'pin': inner = '<circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 2v4M12 18v4M4 12h4M16 12h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'; break;
-      // Новые иконки
       case 'snake': inner = '<path d="M12 2C9 2 7 4 7 7c0 2 1 3 2 4l-3 2 1 1 4-2c1 1 2 2 2 4 0 3-2 5-5 5s-5-2-5-5c0-1.5.7-3 2-4l-1-1c-2 1.5-3 3.5-3 6 0 4 3 7 7 7s7-3 7-7c0-3-1-5-3-7l3-2-1-1-3 2c-1-1-2-2-2-4 0-2 1-3 3-3 1 0 2 .5 3 1.5l1-1c-1-1.5-2.5-2.5-4-2.5z" fill="currentColor"/>'; break;
       case 'tetris': inner = '<rect x="3" y="3" width="4" height="4" fill="currentColor"/><rect x="9" y="3" width="4" height="4" fill="currentColor"/><rect x="15" y="3" width="4" height="4" fill="currentColor"/><rect x="3" y="9" width="4" height="4" fill="currentColor"/><rect x="9" y="9" width="4" height="4" fill="currentColor"/><rect x="15" y="9" width="4" height="4" fill="currentColor"/><rect x="3" y="15" width="4" height="4" fill="currentColor"/><rect x="9" y="15" width="4" height="4" fill="currentColor"/><rect x="15" y="15" width="4" height="4" fill="currentColor"/>'; break;
       case 'minesweeper': inner = '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="16" cy="8" r="1.5" fill="currentColor"/><path d="M9 16c0-2 3-3 3-3s3 1 3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'; break;
       case 'weather': inner = '<path d="M6 16c-2 0-4-2-4-4 0-2 2-4 4-4 1-3 3-5 6-5 3 0 5 2 6 5 2 0 4 2 4 4 0 2-2 4-4 4H6z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'; break;
       case 'notes': inner = '<rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 8h8M8 12h6M8 16h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'; break;
+      case 'player': inner = '<path d="M3 18V6l15 6-15 6z" fill="currentColor"/><circle cx="18" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/>'; break;
       default: inner = '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>';
     }
     return svg + inner + '</svg>';
@@ -47,21 +47,21 @@
   function iconHTML(type, cls) { return iconSVG(type, cls); }
 
   // ============================================================
-  //  2. ЯДРО (KERNEL) – управление окнами и процессами
+  //  2. ЯДРО (KERNEL)
   // ============================================================
   var kernel = {
     windows: [],
     activeWindowId: null,
     nextId: 1,
     zIndexCounter: 1000,
-    pinnedWindows: [] // ID окон, закреплённых поверх
+    pinnedWindows: []
   };
   var desktop = document.getElementById('desktop');
   var taskbarWindows = document.getElementById('taskbar-windows');
   var clockEl = document.getElementById('taskbar-clock');
 
   // ============================================================
-  //  3. ЗВУКОВЫЕ ЭФФЕКТЫ (Web Audio)
+  //  3. ЗВУКОВЫЕ ЭФФЕКТЫ
   // ============================================================
   var audioCtx = null;
   function playSound(type) {
@@ -103,10 +103,9 @@
         osc.start(now);
         osc.stop(now + 0.2);
       }
-    } catch(e) { /* игнорируем, если звук не поддерживается */ }
+    } catch(e) {}
   }
 
-  // Режим "Не беспокоить"
   var doNotDisturb = localStorage.getItem('nextelos-dnd') === 'true';
 
   // ============================================================
@@ -121,7 +120,6 @@
     clockEl.dataset.date = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
     document.getElementById('widget-time').textContent = h + ':' + m + ':' + s;
     document.getElementById('widget-date').textContent = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
-    // Uptime
     if (window._startTime) {
       var uptime = Math.floor((now - window._startTime) / 1000);
       var hours = Math.floor(uptime / 3600);
@@ -153,9 +151,8 @@
       left: options.left || (100 + kernel.windows.length * 30),
       top: options.top || (80 + kernel.windows.length * 30)
     };
-    // Корректировка позиции, чтобы окно не выходило за пределы экрана
     var maxLeft = window.innerWidth - winObj.width;
-    var maxTop = window.innerHeight - winObj.height - 60; // учитываем панель задач
+    var maxTop = window.innerHeight - winObj.height - 60;
     if (winObj.left > maxLeft) winObj.left = Math.max(10, maxLeft - 20);
     if (winObj.top > maxTop) winObj.top = Math.max(10, maxTop - 20);
     if (winObj.left < 10) winObj.left = 10;
@@ -204,7 +201,6 @@
       togglePin(id);
     });
 
-    // Перетаскивание
     if (window.innerWidth > 768) {
       var isDragging = false;
       var startX, startY, origLeft, origTop;
@@ -380,7 +376,6 @@
   //  9. ГОРЯЧИЕ КЛАВИШИ
   // ============================================================
   document.addEventListener('keydown', function(e) {
-    // Alt+Tab – переключение окон
     if (e.altKey && e.key === 'Tab') {
       e.preventDefault();
       var windows = kernel.windows.filter(function(w) { return !w.isMinimized; });
@@ -390,21 +385,18 @@
       bringToFront(windows[nextIdx].id);
       showNotification('Переключено на: ' + windows[nextIdx].title);
     }
-    // Ctrl+W – закрыть текущее окно
     if (e.ctrlKey && e.key === 'w') {
       e.preventDefault();
       if (kernel.activeWindowId) {
         closeWindow(kernel.activeWindowId);
       }
     }
-    // Ctrl+Shift+D – режим "Не беспокоить"
     if (e.ctrlKey && e.shiftKey && e.key === 'D') {
       e.preventDefault();
       doNotDisturb = !doNotDisturb;
       localStorage.setItem('nextelos-dnd', String(doNotDisturb));
       showNotification(doNotDisturb ? 'Режим "Не беспокоить" включён' : 'Режим "Не беспокоить" выключен');
     }
-    // Ctrl+Space – глобальный поиск
     if (e.ctrlKey && e.key === ' ') {
       e.preventDefault();
       var searchApp = builtinApps.find(function(a) { return a.id === 'search'; });
@@ -443,7 +435,7 @@
           return self.set('/', { type: 'folder', children: {} })
             .then(function() { return self.set('/home', { type: 'folder', children: {} }); })
             .then(function() { return self.set('/home/user', { type: 'folder', children: {} }); })
-            .then(function() { return self.set('/home/user/readme.txt', { type: 'file', content: 'Добро пожаловать в NextelOS v0.0.5!' }); })
+            .then(function() { return self.set('/home/user/readme.txt', { type: 'file', content: 'Добро пожаловать в NextelOS v0.0.6!' }); })
             .then(function() { return self.set('/system', { type: 'folder', children: {} }); })
             .then(function() { return self.set('/system/trash', { type: 'folder', children: {} }); })
             .then(function() { return self.set('/system/apps.json', { type: 'file', content: '[]' }); })
@@ -576,7 +568,7 @@
   var fsReady = false;
 
   // ============================================================
-  //  11. УВЕДОМЛЕНИЯ (с звуком)
+  //  11. УВЕДОМЛЕНИЯ
   // ============================================================
   function showNotification(message, type, duration) {
     type = type || 'info';
@@ -665,7 +657,8 @@
     { id: 'snake', label: 'Змейка', icon: 'snake', action: openSnakeGame },
     { id: 'tetris', label: 'Тетрис', icon: 'tetris', action: openTetris },
     { id: 'minesweeper', label: 'Сапёр', icon: 'minesweeper', action: openMinesweeper },
-    { id: 'presentation', label: 'Презентация', icon: 'file', action: openPresentation }
+    { id: 'presentation', label: 'Презентация', icon: 'file', action: openPresentation },
+    { id: 'player', label: 'Плеер', icon: 'player', action: openPlayer }
   ];
   var installedApps = [];
 
@@ -731,7 +724,6 @@
     showNotification('Иконки упорядочены');
   }
 
-  // Выделение прямоугольником
   var selectionRect = document.getElementById('selection-rect');
   var isSelecting = false;
   var selectStartX, selectStartY;
@@ -804,7 +796,6 @@
     }
   });
 
-  // Перетаскивание иконок с созданием папок
   function makeDraggable(icon, appId) {
     var isDragging = false;
     var startX, startY, origTop, origLeft, clone = null;
@@ -998,7 +989,7 @@
   }
 
   // ============================================================
-  //  15. КОНТЕКСТНОЕ МЕНЮ (исправленное)
+  //  15. КОНТЕКСТНОЕ МЕНЮ
   // ============================================================
   function showContextMenuForIcon(x, y, app) {
     var menu = document.getElementById('context-menu');
@@ -1163,13 +1154,11 @@
     trayEl.style.display = trayVisible ? 'flex' : 'none';
   });
 
-  // Громкость
   document.getElementById('volume-slider').addEventListener('input', function() {
     var val = Math.round(this.value * 100);
     document.getElementById('volume-label').textContent = val + '%';
   });
 
-  // Режим "Не беспокоить"
   document.getElementById('do-not-disturb').addEventListener('change', function() {
     doNotDisturb = this.checked;
     localStorage.setItem('nextelos-dnd', String(doNotDisturb));
@@ -1178,7 +1167,7 @@
   document.getElementById('do-not-disturb').checked = doNotDisturb;
 
   // ============================================================
-  //  17. ВИДЖЕТЫ (погода, системная информация, график CPU)
+  //  17. ВИДЖЕТЫ
   // ============================================================
   var cpuVal = 10;
   var cpuHistory = [];
@@ -1195,7 +1184,6 @@
     } else {
       document.getElementById('widget-memory').textContent = '-- MB';
     }
-    // График CPU
     cpuHistory.push(cpuVal);
     if (cpuHistory.length > 50) cpuHistory.shift();
     cpuCtx.clearRect(0, 0, cpuChartCanvas.width, cpuChartCanvas.height);
@@ -1213,34 +1201,98 @@
   setInterval(updateSysInfo, 1500);
   updateSysInfo();
 
-  var weatherKey = '';
+  // ============================================================
+  //  18. ПОГОДА (без API-ключа, через Open-Meteo)
+  // ============================================================
   var weatherData = null;
+  var weatherCity = 'Moscow';
+
   function fetchWeather(city) {
-    city = city || 'Moscow';
-    if (!weatherKey) {
-      document.getElementById('widget-weather').style.display = 'none';
-      return;
-    }
-    fetch('https://api.openweathermap.org/data/2.5/weather?q=' + city + '&appid=' + weatherKey + '&units=metric&lang=ru')
-      .then(function(resp) {
-        if (!resp.ok) throw new Error('API ошибка');
-        return resp.json();
-      })
+    weatherCity = city || 'Moscow';
+    // Геокодинг через Nominatim (OpenStreetMap)
+    fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(weatherCity) + '&format=json&limit=1')
+      .then(function(resp) { return resp.json(); })
       .then(function(data) {
-        weatherData = data;
-        document.getElementById('widget-temp').textContent = Math.round(data.main.temp) + '°C';
-        document.getElementById('widget-desc').textContent = data.weather[0].description;
-        document.getElementById('widget-weather').style.display = 'block';
+        if (data && data.length > 0) {
+          var lat = data[0].lat;
+          var lon = data[0].lon;
+          // Запрос погоды через Open-Meteo
+          return fetch('https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&forecast_days=1');
+        } else {
+          throw new Error('Город не найден');
+        }
       })
-      .catch(function() {
-        document.getElementById('widget-weather').style.display = 'block';
-        document.getElementById('widget-temp').textContent = '--°C';
-        document.getElementById('widget-desc').textContent = 'Ошибка API';
+      .then(function(resp) { return resp.json(); })
+      .then(function(data) {
+        if (data && data.current_weather) {
+          weatherData = {
+            temp: Math.round(data.current_weather.temperature),
+            wind: data.current_weather.windspeed,
+            wind_dir: data.current_weather.winddirection,
+            desc: data.current_weather.weathercode ? getWeatherDesc(data.current_weather.weathercode) : 'Ясно',
+            max_temp: data.daily ? Math.round(data.daily.temperature_2m_max[0]) : null,
+            min_temp: data.daily ? Math.round(data.daily.temperature_2m_min[0]) : null,
+            sunrise: data.daily ? data.daily.sunrise[0] : null,
+            sunset: data.daily ? data.daily.sunset[0] : null,
+            city: weatherCity
+          };
+          updateWeatherWidget();
+          showNotification('Погода обновлена для ' + weatherCity);
+        } else {
+          throw new Error('Нет данных о погоде');
+        }
+      })
+      .catch(function(err) {
+        console.error('Ошибка погоды:', err);
+        showNotification('Не удалось получить погоду: ' + err.message, 'error');
+        document.getElementById('widget-weather').style.display = 'none';
       });
   }
-  weatherKey = localStorage.getItem('nextelos-weather-key') || '';
-  if (weatherKey) fetchWeather();
-  setInterval(function() { if (weatherKey) fetchWeather(); }, 600000);
+
+  function getWeatherDesc(code) {
+    var map = {
+      0: 'Ясно',
+      1: 'В основном ясно',
+      2: 'Переменная облачность',
+      3: 'Пасмурно',
+      45: 'Туман',
+      48: 'Иней',
+      51: 'Морось',
+      53: 'Морось',
+      55: 'Морось',
+      61: 'Дождь',
+      63: 'Дождь',
+      65: 'Дождь',
+      71: 'Снег',
+      73: 'Снег',
+      75: 'Снег',
+      80: 'Ливень',
+      81: 'Ливень',
+      82: 'Ливень',
+      95: 'Гроза',
+      96: 'Гроза',
+      99: 'Гроза'
+    };
+    return map[code] || 'Неизвестно';
+  }
+
+  function updateWeatherWidget() {
+    if (weatherData) {
+      document.getElementById('widget-temp').textContent = weatherData.temp + '°C';
+      document.getElementById('widget-desc').textContent = weatherData.desc;
+      document.getElementById('widget-weather').style.display = 'block';
+    }
+  }
+
+  // Загружаем погоду при старте
+  setTimeout(function() {
+    fetchWeather('Moscow');
+  }, 1000);
+
+  // Обновляем погоду каждые 10 минут
+  setInterval(function() {
+    if (weatherCity) fetchWeather(weatherCity);
+  }, 600000);
 
   // Виджеты перетаскиваемые
   var widgetsContainer = document.getElementById('widgets');
@@ -1281,63 +1333,107 @@
     openCalendar();
   });
   document.getElementById('widget-weather').addEventListener('click', function() {
-    openWeatherMap();
+    openWeatherApp();
   });
   document.getElementById('widget-sysinfo').addEventListener('click', function() {
     openProcessManager();
   });
 
   // ============================================================
-  //  18. ПОГОДА С КАРТОЙ (OpenStreetMap)
+  //  19. ПОГОДА (полноценное приложение)
   // ============================================================
-  function openWeatherMap() {
-    var content = '<div style="height:400px;display:flex;flex-direction:column;"><div style="display:flex;gap:8px;padding:6px;background:rgba(255,255,255,0.05);"><input id="weather-city" type="text" placeholder="Введите город..." value="Moscow" style="flex:1;padding:4px 8px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);"><button id="weather-fetch" style="padding:4px 16px;background:var(--accent);color:#fff;border-radius:4px;">Показать</button></div><div id="weather-map" style="flex:1;background:#1a1a2e;border-radius:6px;position:relative;overflow:hidden;"><div id="weather-info" style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.7);padding:10px;border-radius:6px;color:#fff;z-index:10;font-size:14px;max-width:200px;"></div><iframe id="weather-iframe" style="width:100%;height:100%;border:none;" src="about:blank"></iframe></div></div>';
-    var winId = createWindow('Погода', content, { width: 700, height: 500, iconType: 'weather' });
+  function openWeatherApp() {
+    var content = '<div class="weather-search"><input id="weather-search-input" type="text" placeholder="Введите город..." value="' + weatherCity + '"><button id="weather-search-btn">Найти</button></div><div class="weather-full" id="weather-full"><div class="weather-main"><div class="temp" id="weather-main-temp">--°C</div><div class="desc" id="weather-main-desc">--</div><div style="font-size:14px;color:var(--text-secondary);margin-top:4px;" id="weather-main-city">--</div></div><div class="weather-detail"><div class="label">Макс</div><div class="value" id="weather-max">--°C</div></div><div class="weather-detail"><div class="label">Мин</div><div class="value" id="weather-min">--°C</div></div><div class="weather-detail"><div class="label">Ветер</div><div class="value" id="weather-wind">-- м/с</div></div><div class="weather-detail"><div class="label">Влажность</div><div class="value" id="weather-humidity">--%</div></div><div class="weather-detail"><div class="label">Восход</div><div class="value" id="weather-sunrise">--:--</div></div><div class="weather-detail"><div class="label">Закат</div><div class="value" id="weather-sunset">--:--</div></div><div class="weather-map"><iframe id="weather-map-frame" src="about:blank"></iframe></div></div>';
+    var winId = createWindow('Погода', content, { width: 500, height: 550, iconType: 'weather' });
     setTimeout(function() {
-      var cityInput = document.getElementById('weather-city');
-      var fetchBtn = document.getElementById('weather-fetch');
-      var infoDiv = document.getElementById('weather-info');
-      var iframe = document.getElementById('weather-iframe');
+      var searchInput = document.getElementById('weather-search-input');
+      var searchBtn = document.getElementById('weather-search-btn');
 
-      function loadWeather(city) {
-        if (!weatherKey) {
-          infoDiv.innerHTML = '❌ API-ключ не задан. Укажите его в настройках.';
-          return;
+      function updateWeatherUI(data) {
+        if (!data) return;
+        document.getElementById('weather-main-temp').textContent = data.temp + '°C';
+        document.getElementById('weather-main-desc').textContent = data.desc;
+        document.getElementById('weather-main-city').textContent = data.city || weatherCity;
+        document.getElementById('weather-max').textContent = data.max_temp !== null ? data.max_temp + '°C' : '--°C';
+        document.getElementById('weather-min').textContent = data.min_temp !== null ? data.min_temp + '°C' : '--°C';
+        document.getElementById('weather-wind').textContent = data.wind !== undefined ? data.wind + ' м/с' : '-- м/с';
+        document.getElementById('weather-humidity').textContent = data.humidity !== undefined ? data.humidity + '%' : '--%';
+        document.getElementById('weather-sunrise').textContent = data.sunrise ? data.sunrise.split('T')[1] || data.sunrise : '--:--';
+        document.getElementById('weather-sunset').textContent = data.sunset ? data.sunset.split('T')[1] || data.sunset : '--:--';
+        // Карта
+        var mapFrame = document.getElementById('weather-map-frame');
+        if (data.lat && data.lon) {
+          mapFrame.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + (data.lon - 0.5) + ',' + (data.lat - 0.5) + ',' + (data.lon + 0.5) + ',' + (data.lat + 0.5) + '&layer=mapnik&marker=' + data.lat + ',' + data.lon;
         }
-        fetch('https://api.openweathermap.org/data/2.5/weather?q=' + encodeURIComponent(city) + '&appid=' + weatherKey + '&units=metric&lang=ru')
-          .then(function(resp) {
-            if (!resp.ok) throw new Error('Город не найден');
-            return resp.json();
-          })
+      }
+
+      function loadWeatherForApp(city) {
+        weatherCity = city;
+        fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(city) + '&format=json&limit=1')
+          .then(function(resp) { return resp.json(); })
           .then(function(data) {
-            var temp = Math.round(data.main.temp);
-            var desc = data.weather[0].description;
-            var lon = data.coord.lon;
-            var lat = data.coord.lat;
-            infoDiv.innerHTML = '<div style="font-size:20px;">' + temp + '°C</div><div>' + desc + '</div><div style="font-size:12px;opacity:0.7;">' + city + '</div>';
-            var mapUrl = 'https://www.openstreetmap.org/export/embed.html?bbox=' + (lon - 0.5) + ',' + (lat - 0.5) + ',' + (lon + 0.5) + ',' + (lat + 0.5) + '&layer=mapnik&marker=' + lat + ',' + lon;
-            iframe.src = mapUrl;
+            if (data && data.length > 0) {
+              var lat = parseFloat(data[0].lat);
+              var lon = parseFloat(data[0].lon);
+              return fetch('https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&forecast_days=1');
+            } else {
+              throw new Error('Город не найден');
+            }
+          })
+          .then(function(resp) { return resp.json(); })
+          .then(function(data) {
+            if (data && data.current_weather) {
+              var wData = {
+                temp: Math.round(data.current_weather.temperature),
+                wind: data.current_weather.windspeed,
+                wind_dir: data.current_weather.winddirection,
+                desc: data.current_weather.weathercode ? getWeatherDesc(data.current_weather.weathercode) : 'Ясно',
+                max_temp: data.daily ? Math.round(data.daily.temperature_2m_max[0]) : null,
+                min_temp: data.daily ? Math.round(data.daily.temperature_2m_min[0]) : null,
+                sunrise: data.daily ? data.daily.sunrise[0] : null,
+                sunset: data.daily ? data.daily.sunset[0] : null,
+                city: city,
+                lat: lat,
+                lon: lon,
+                humidity: data.current_weather.relativehumidity || null
+              };
+              weatherData = wData;
+              updateWeatherUI(wData);
+              updateWeatherWidget();
+              showNotification('Погода обновлена для ' + city);
+            } else {
+              throw new Error('Нет данных о погоде');
+            }
           })
           .catch(function(err) {
-            infoDiv.innerHTML = '❌ ' + err.message;
+            showNotification('Ошибка: ' + err.message, 'error');
           });
       }
 
-      fetchBtn.addEventListener('click', function() {
-        loadWeather(cityInput.value.trim() || 'Moscow');
+      searchBtn.addEventListener('click', function() {
+        var city = searchInput.value.trim();
+        if (city) loadWeatherForApp(city);
       });
-      cityInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') loadWeather(cityInput.value.trim() || 'Moscow');
+      searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          var city = searchInput.value.trim();
+          if (city) loadWeatherForApp(city);
+        }
       });
-      loadWeather('Moscow');
+      // Загружаем текущую погоду
+      if (weatherData) {
+        updateWeatherUI(weatherData);
+      } else {
+        loadWeatherForApp('Moscow');
+      }
     }, 100);
   }
 
   // ============================================================
-  //  19. ПРИЛОЖЕНИЯ
+  //  20. ПРИЛОЖЕНИЯ (полный список)
   // ============================================================
 
-  // ----- 19.1 Терминал -----
+  // ----- 20.1 Терминал -----
   function openTerminal() {
     var content = '<div id="terminal-output"></div><div class="terminal-input-line"><span>$</span><input id="terminal-input" type="text" autofocus></div>';
     var winId = createWindow('Терминал', content, { width: 600, height: 350, iconType: 'terminal' });
@@ -1488,7 +1584,7 @@
         }
       }
 
-      append('Добро пожаловать в Терминал NextelOS v0.0.5');
+      append('Добро пожаловать в Терминал NextelOS v0.0.6');
       append('Введите help для списка команд.');
       append('\n' + currentDir + ' $ ');
 
@@ -1517,9 +1613,9 @@
     }, 100);
   }
 
-  // ----- 19.2 Файловый менеджер (с закладками и контекстным меню) -----
+  // ----- 20.2 Файловый менеджер (с закладками) -----
   var fmCurrentPath = '/home/user';
-  var fmClipboard = null; // { path, type: 'copy'|'cut' }
+  var fmClipboard = null;
   var fmBookmarks = [];
 
   function loadBookmarks() {
@@ -1594,7 +1690,6 @@
                   });
                 }
               });
-              // Контекстное меню для файла
               div.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1833,7 +1928,7 @@
     }, 100);
   }
 
-  // ----- 19.3 Редактор (с Markdown-предпросмотром) -----
+  // ----- 20.3 Редактор (с Markdown-предпросмотром) -----
   function openEditor(filePath, initialContent) {
     initialContent = initialContent || '';
     var content = '<div class="editor-area"><div class="editor-toolbar"><button id="editor-save"><span class="icon">' + iconHTML('file') + '</span>Сохранить</button><button id="editor-open"><span class="icon">' + iconHTML('folder') + '</span>Открыть</button><button id="editor-preview">📄 Предпросмотр</button><span class="file-info" id="editor-fileinfo">' + (filePath || 'Новый файл') + '</span></div><div id="editor-container" style="display:flex;flex:1;height:calc(100% - 36px);"><textarea id="editor-textarea" style="flex:1;background:#111;color:#eee;border:none;padding:10px;font-family:\'Courier New\',monospace;font-size:13px;resize:none;outline:none;height:100%;">' + initialContent + '</textarea><div id="editor-preview-panel" style="flex:1;background:#fff;color:#222;padding:10px;overflow:auto;display:none;border-left:1px solid #333;"></div></div></div>';
@@ -1955,12 +2050,11 @@
     }, 100);
   }
 
-  // ----- 19.4 Калькулятор (простой и научный) -----
+  // ----- 20.4 Калькулятор (простой и научный) -----
   function openCalculator() {
     var content = '<div class="calc-mode-switch"><button id="calc-mode-simple" class="active">Простой</button><button id="calc-mode-scientific">Научный</button></div><div id="calc-simple"><div class="calc-grid"><div class="calc-display" id="calc-display">0</div><button class="calc-btn" data-value="7">7</button><button class="calc-btn" data-value="8">8</button><button class="calc-btn" data-value="9">9</button><button class="calc-btn op" data-value="+">+</button><button class="calc-btn" data-value="4">4</button><button class="calc-btn" data-value="5">5</button><button class="calc-btn" data-value="6">6</button><button class="calc-btn op" data-value="-">−</button><button class="calc-btn" data-value="1">1</button><button class="calc-btn" data-value="2">2</button><button class="calc-btn" data-value="3">3</button><button class="calc-btn op" data-value="*">×</button><button class="calc-btn" data-value="0">0</button><button class="calc-btn" data-value=".">.</button><button class="calc-btn equal" data-value="=">=</button><button class="calc-btn op" data-value="/">÷</button><button class="calc-btn" data-value="C" style="grid-column:span 2;">C</button></div></div><div id="calc-scientific" style="display:none;"><div class="calc-grid-scientific"><div class="calc-display" id="calc-display-sci" style="grid-column:span 5;">0</div><button class="calc-btn" data-value="sin">sin</button><button class="calc-btn" data-value="cos">cos</button><button class="calc-btn" data-value="tan">tan</button><button class="calc-btn" data-value="log">log</button><button class="calc-btn" data-value="ln">ln</button><button class="calc-btn" data-value="7">7</button><button class="calc-btn" data-value="8">8</button><button class="calc-btn" data-value="9">9</button><button class="calc-btn op" data-value="+">+</button><button class="calc-btn op" data-value="-">−</button><button class="calc-btn" data-value="4">4</button><button class="calc-btn" data-value="5">5</button><button class="calc-btn" data-value="6">6</button><button class="calc-btn op" data-value="*">×</button><button class="calc-btn op" data-value="/">÷</button><button class="calc-btn" data-value="1">1</button><button class="calc-btn" data-value="2">2</button><button class="calc-btn" data-value="3">3</button><button class="calc-btn" data-value="^">^</button><button class="calc-btn equal" data-value="=">=</button><button class="calc-btn" data-value="0">0</button><button class="calc-btn" data-value=".">.</button><button class="calc-btn" data-value="C" style="grid-column:span 2;">C</button></div></div><div class="calc-history" id="calc-history"></div>';
     var winId = createWindow('Калькулятор', content, { width: 350, height: 470, iconType: 'calc' });
     setTimeout(function() {
-      // Простой режим
       var display = document.getElementById('calc-display');
       var history = document.getElementById('calc-history');
       var currentInput = '';
@@ -2052,7 +2146,6 @@
       });
       updateDisplay();
 
-      // Научный режим
       var sciDisplay = document.getElementById('calc-display-sci');
       var sciInput = '';
       var sciPrev = '';
@@ -2154,7 +2247,6 @@
       });
       updateSciDisplay();
 
-      // Переключение режимов
       var simpleMode = document.getElementById('calc-simple');
       var scientificMode = document.getElementById('calc-scientific');
       var simpleBtn = document.getElementById('calc-mode-simple');
@@ -2175,10 +2267,7 @@
     }, 100);
   }
 
-  // ----- 19.5 Настройки (слайд-шоу обоев) -----
-  var slideshowInterval = null;
-  var slideshowIndex = 0;
-  var slideshowWallpapers = [];
+  // ----- 20.5 Настройки -----
   var slideshowTimer = null;
 
   function openSettings() {
@@ -2198,7 +2287,6 @@
       { name: 'Обои по умолчанию', url: '' }
     ];
     var currentTheme = localStorage.getItem('nextelos-theme') || 'dark';
-    var weatherKeySetting = localStorage.getItem('nextelos-weather-key') || '';
     var showWidgets = localStorage.getItem('nextelos-show-widgets') !== 'false';
     var iconSize = localStorage.getItem('nextelos-icon-size') || '76';
     var animLevel = localStorage.getItem('nextelos-anim-level') || 'medium';
@@ -2211,11 +2299,9 @@
                   '<div class="settings-section"><h3>Анимации</h3><div class="theme-buttons"><button data-anim="off" class="' + (animLevel === 'off' ? 'active' : '') + '">Выкл</button><button data-anim="medium" class="' + (animLevel === 'medium' ? 'active' : '') + '">Средние</button><button data-anim="max" class="' + (animLevel === 'max' ? 'active' : '') + '">Максимум</button></div></div>' +
                   '<div class="settings-section"><h3>Виджеты</h3><label><input type="checkbox" id="show-widgets" ' + (showWidgets ? 'checked' : '') + '> Показывать виджеты</label></div>' +
                   '<div class="settings-section"><h3>Размер иконок</h3><input type="range" id="icon-size" min="60" max="100" value="' + iconSize + '"> <span id="icon-size-label">' + iconSize + 'px</span></div>' +
-                  '<div class="settings-section"><h3>Погода (OpenWeatherMap)</h3><input type="text" id="weather-key-input" placeholder="API-ключ" value="' + weatherKeySetting + '"><button id="weather-key-save">Сохранить</button></div>' +
-                  '<div class="settings-section"><h3>О системе</h3><p style="color:#888;">NextelOS v0.0.5<br>Ядро: JavaScript<br>Файловая система: IndexedDB</p></div>';
+                  '<div class="settings-section"><h3>О системе</h3><p style="color:#888;">NextelOS v0.0.6<br>Ядро: JavaScript<br>Файловая система: IndexedDB</p></div>';
     var winId = createWindow('Настройки', content, { width: 500, height: 600, iconType: 'gear' });
     setTimeout(function() {
-      // Обои
       var grid = document.getElementById('wallpaper-grid');
       if (grid) {
         wallpapers.forEach(function(wp) {
@@ -2255,7 +2341,6 @@
           grid.appendChild(div);
         });
       }
-      // Загрузка своих обоев
       var uploadInput = document.getElementById('wallpaper-upload');
       var uploadBtn = document.getElementById('wallpaper-upload-btn');
       if (uploadBtn) {
@@ -2285,7 +2370,6 @@
           reader.readAsDataURL(file);
         });
       }
-      // Слайд-шоу
       var slideshowSelect = document.getElementById('slideshow-interval');
       if (slideshowSelect) {
         slideshowSelect.addEventListener('change', function() {
@@ -2297,12 +2381,11 @@
           }
           if (interval > 0) {
             var allWallpapers = wallpapers.filter(function(w) { return w.url !== ''; });
-            slideshowWallpapers = allWallpapers;
-            slideshowIndex = 0;
+            var idx = 0;
             slideshowTimer = setInterval(function() {
-              if (slideshowWallpapers.length === 0) return;
-              slideshowIndex = (slideshowIndex + 1) % slideshowWallpapers.length;
-              var wp = slideshowWallpapers[slideshowIndex];
+              if (allWallpapers.length === 0) return;
+              var wp = allWallpapers[idx % allWallpapers.length];
+              idx++;
               var desktopEl = document.getElementById('desktop');
               desktopEl.style.backgroundImage = 'url("' + wp.url + '")';
               desktopEl.style.backgroundSize = 'cover';
@@ -2324,7 +2407,6 @@
           slideshowSelect.dispatchEvent(new Event('change'));
         }
       }
-      // Темы
       var themeBtns = document.querySelectorAll('.theme-buttons button[data-theme]');
       themeBtns.forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -2337,7 +2419,6 @@
           showNotification('Тема: ' + theme);
         });
       });
-      // Анимации
       var animBtns = document.querySelectorAll('.theme-buttons button[data-anim]');
       animBtns.forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -2348,7 +2429,6 @@
           showNotification('Анимации: ' + level);
         });
       });
-      // Виджеты
       var widgetsCheck = document.getElementById('show-widgets');
       if (widgetsCheck) {
         widgetsCheck.addEventListener('change', function() {
@@ -2357,10 +2437,11 @@
           document.getElementById('widgets').style.display = show ? 'flex' : 'none';
         });
       }
-      // Размер иконок
       var sizeSlider = document.getElementById('icon-size');
       var sizeLabel = document.getElementById('icon-size-label');
       if (sizeSlider) {
+        sizeSlider.value = iconSize;
+        sizeLabel.textContent = iconSize + 'px';
         sizeSlider.addEventListener('input', function() {
           var val = sizeSlider.value;
           sizeLabel.textContent = val + 'px';
@@ -2369,25 +2450,6 @@
             el.style.width = val + 'px';
           });
           renderDesktopIcons();
-        });
-      }
-      // Погода
-      var keyInput = document.getElementById('weather-key-input');
-      var keySave = document.getElementById('weather-key-save');
-      if (keySave) {
-        keySave.addEventListener('click', function() {
-          var key = keyInput.value.trim();
-          if (key) {
-            localStorage.setItem('nextelos-weather-key', key);
-            weatherKey = key;
-            showNotification('Ключ сохранён. Обновление погоды...');
-            fetchWeather();
-          } else {
-            localStorage.removeItem('nextelos-weather-key');
-            weatherKey = '';
-            document.getElementById('widget-weather').style.display = 'none';
-            showNotification('Ключ удалён');
-          }
         });
       }
     }, 100);
@@ -2401,7 +2463,7 @@
     localStorage.setItem('nextelos-anim-level', level);
   }
 
-  // ----- 19.6 Менеджер процессов -----
+  // ----- 20.6 Менеджер процессов -----
   function openProcessManager() {
     var content = '<div class="process-list" id="process-list"></div>';
     var winId = createWindow('Менеджер процессов', content, { width: 400, height: 300, iconType: 'process' });
@@ -2432,7 +2494,7 @@
     setTimeout(render, 100);
   }
 
-  // ----- 19.7 Корзина -----
+  // ----- 20.7 Корзина -----
   function openTrash() {
     var content = '<div class="trash-toolbar"><button id="trash-empty"><span class="icon">' + iconHTML('trash') + '</span>Очистить</button><button id="trash-refresh">🔄 Обновить</button></div><div id="trash-list"></div>';
     var winId = createWindow('Корзина', content, { width: 500, height: 350, iconType: 'trash' });
@@ -2533,9 +2595,9 @@
     }, 100);
   }
 
-  // ----- 19.8 Магазин приложений -----
+  // ----- 20.8 Магазин приложений (улучшенный) -----
   var storeCatalog = [
-    { id: 'notes', name: 'Заметки', icon: 'notes', desc: 'Простые заметки.', install: function() {
+    { id: 'notes', name: 'Заметки', icon: '📝', desc: 'Простые заметки.', install: function() {
       if (installedApps.find(function(a) { return a.id === 'notes'; })) {
         showNotification('Уже установлено', 'warning');
         return;
@@ -2543,7 +2605,7 @@
       installedApps.push({
         id: 'notes',
         label: 'Заметки',
-        icon: 'notes',
+        icon: '📝',
         action: function() {
           var c = '<textarea style="width:100%;height:300px;background:#111;color:#eee;border:none;padding:10px;font-family:inherit;resize:none;outline:none;" placeholder="Введите заметку..."></textarea>';
           createWindow('Заметки', c, { width: 400, height: 350, iconType: 'notes' });
@@ -2554,7 +2616,7 @@
         showNotification('Заметки установлены!');
       });
     } },
-    { id: 'calendar_app', name: 'Календарь', icon: 'calendar-app', desc: 'Календарь (заглушка).', install: function() {
+    { id: 'calendar_app', name: 'Календарь', icon: '📅', desc: 'Календарь с событиями.', install: function() {
       if (installedApps.find(function(a) { return a.id === 'calendar_app'; })) {
         showNotification('Уже установлено', 'warning');
         return;
@@ -2562,7 +2624,7 @@
       installedApps.push({
         id: 'calendar_app',
         label: 'Календарь',
-        icon: 'calendar-app',
+        icon: '📅',
         action: function() {
           openCalendar();
         }
@@ -2572,7 +2634,7 @@
         showNotification('Календарь установлен!');
       });
     } },
-    { id: 'weather_app', name: 'Погода', icon: 'weather', desc: 'Отображает погоду из виджета.', install: function() {
+    { id: 'weather_app', name: 'Погода', icon: '🌤️', desc: 'Полноценная погода без ключа.', install: function() {
       if (installedApps.find(function(a) { return a.id === 'weather_app'; })) {
         showNotification('Уже установлено', 'warning');
         return;
@@ -2580,21 +2642,30 @@
       installedApps.push({
         id: 'weather_app',
         label: 'Погода',
-        icon: 'weather',
+        icon: '🌤️',
         action: function() {
-          var c = '<div style="text-align:center;padding:30px;color:#888;"><div style="font-size:64px;">🌡️</div><div style="font-size:24px;color:#ddd;margin:10px 0;">Погода</div><div style="font-size:16px;">Температура: <span id="app-temp">--</span>°C</div><div style="font-size:14px;color:#aaa;" id="app-desc">--</div></div>';
-          var wid = createWindow('Погода', c, { width: 300, height: 280, iconType: 'weather' });
-          setTimeout(function() {
-            if (weatherData) {
-              document.getElementById('app-temp').textContent = Math.round(weatherData.main.temp);
-              document.getElementById('app-desc').textContent = weatherData.weather[0].description;
-            }
-          }, 200);
+          openWeatherApp();
         }
       });
       saveAppRegistry().then(function() {
         renderDesktopIcons();
         showNotification('Погода установлена!');
+      });
+    } },
+    { id: 'player', name: 'Музыкальный плеер', icon: '🎵', desc: 'Загружайте и слушайте MP3.', install: function() {
+      if (installedApps.find(function(a) { return a.id === 'player'; })) {
+        showNotification('Уже установлено', 'warning');
+        return;
+      }
+      installedApps.push({
+        id: 'player',
+        label: 'Плеер',
+        icon: '🎵',
+        action: openPlayer
+      });
+      saveAppRegistry().then(function() {
+        renderDesktopIcons();
+        showNotification('Плеер установлен!');
       });
     } }
   ];
@@ -2603,14 +2674,14 @@
     var html = '<div class="store-grid">';
     storeCatalog.forEach(function(app) {
       var isInstalled = installedApps.some(function(a) { return a.id === app.id; });
-      html += '<div class="store-item"><div class="app-icon">' + app.icon + '</div><div class="app-name">' + app.name + '</div><div class="app-desc">' + app.desc + '</div><div class="app-actions">' +
+      html += '<div class="store-item"><span class="app-icon">' + app.icon + '</span><div class="app-name">' + app.name + '</div><div class="app-desc">' + app.desc + '</div><div class="app-actions">' +
         (isInstalled ?
           '<span class="installed-badge">✅ Установлено</span><button class="uninstall-btn" data-id="' + app.id + '">Удалить</button>' :
           '<button class="install-btn" data-id="' + app.id + '">Установить</button>') +
         '</div></div>';
     });
     html += '</div>';
-    var winId = createWindow('Магазин приложений', html, { width: 600, height: 500, iconType: 'folder' });
+    var winId = createWindow('Магазин приложений', html, { width: 650, height: 500, iconType: 'folder' });
     setTimeout(function() {
       document.querySelectorAll('.install-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -2648,10 +2719,10 @@
     }, 100);
   }
 
-  // ----- 19.9 Pigmo Pro (рисовалка с улучшениями) -----
+  // ----- 20.9 Pigmo Pro (улучшенный) -----
   function openPigmoPro() {
-    var content = '<div class="pigmo-toolbar"><button id="pigmo-clear">Очистить</button><button id="pigmo-save">💾 Сохранить</button><input type="color" id="pigmo-color" value="#000000"><input type="range" id="pigmo-size" min="1" max="20" value="4"><label style="color:#aaa;font-size:12px;">Толщина: <span id="pigmo-size-label">4</span></label><button id="pigmo-eraser">Ластик</button><button id="pigmo-crop">Обрезать</button><button id="pigmo-resize">Изменить размер</button><button id="pigmo-rotate">Повернуть</button><button id="pigmo-fill">Заливка</button><select id="pigmo-shape"><option value="free">Рисование</option><option value="rect">Прямоугольник</option><option value="circle">Круг</option></select></div><canvas id="pigmo-canvas" width="600" height="400"></canvas>';
-    var winId = createWindow('Pigmo Pro', content, { width: 660, height: 540, iconType: 'paint' });
+    var content = '<div class="pigmo-toolbar"><button id="pigmo-clear">Очистить</button><button id="pigmo-save">💾 Сохранить</button><input type="color" id="pigmo-color" value="#000000"><input type="range" id="pigmo-size" min="1" max="20" value="4"><label style="color:#aaa;font-size:12px;">Толщина: <span id="pigmo-size-label">4</span></label><button id="pigmo-eraser">Ластик</button><button id="pigmo-undo">↩ Отмена</button><button id="pigmo-redo">↪ Повтор</button><button id="pigmo-fill">Заливка</button><select id="pigmo-shape"><option value="free">Рисование</option><option value="rect">Прямоугольник</option><option value="circle">Круг</option><option value="line">Линия</option></select><button id="pigmo-text">Текст</button></div><div class="pigmo-layers" id="pigmo-layers"><div class="layer active" data-layer="0">Слой 1 <span class="layer-del">✕</span></div></div><canvas id="pigmo-canvas" width="600" height="400"></canvas>';
+    var winId = createWindow('Pigmo Pro', content, { width: 660, height: 580, iconType: 'paint' });
     setTimeout(function() {
       var canvas = document.getElementById('pigmo-canvas');
       var ctx = canvas.getContext('2d');
@@ -2661,22 +2732,101 @@
       var eraserBtn = document.getElementById('pigmo-eraser');
       var fillBtn = document.getElementById('pigmo-fill');
       var shapeSelect = document.getElementById('pigmo-shape');
+      var undoBtn = document.getElementById('pigmo-undo');
+      var redoBtn = document.getElementById('pigmo-redo');
+      var textBtn = document.getElementById('pigmo-text');
       var isDrawing = false;
       var lastX, lastY;
       var eraseMode = false;
       var fillMode = false;
       var startX, startY;
+      var history = [];
+      var historyIndex = -1;
+      var maxHistory = 30;
+      var layers = [{ id: 0, visible: true }];
+      var currentLayer = 0;
+      var isTextMode = false;
 
       ctx.fillStyle = '#fff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      saveHistory();
 
-      sizeSlider.addEventListener('input', function() {
-        sizeLabel.textContent = sizeSlider.value;
-      });
+      function saveHistory() {
+        history = history.slice(0, historyIndex + 1);
+        var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        history.push(imgData);
+        if (history.length > maxHistory) history.shift();
+        historyIndex = history.length - 1;
+        updateUndoButtons();
+      }
+
+      function undo() {
+        if (historyIndex > 0) {
+          historyIndex--;
+          ctx.putImageData(history[historyIndex], 0, 0);
+          updateUndoButtons();
+        }
+      }
+
+      function redo() {
+        if (historyIndex < history.length - 1) {
+          historyIndex++;
+          ctx.putImageData(history[historyIndex], 0, 0);
+          updateUndoButtons();
+        }
+      }
+
+      function updateUndoButtons() {
+        undoBtn.style.opacity = historyIndex > 0 ? '1' : '0.4';
+        redoBtn.style.opacity = historyIndex < history.length - 1 ? '1' : '0.4';
+      }
+
+      function renderLayers() {
+        var container = document.getElementById('pigmo-layers');
+        if (!container) return;
+        container.innerHTML = '';
+        layers.forEach(function(layer, idx) {
+          var div = document.createElement('div');
+          div.className = 'layer' + (idx === currentLayer ? ' active' : '');
+          div.dataset.layer = idx;
+          div.innerHTML = 'Слой ' + (idx + 1) + ' <span class="layer-del" data-layer="' + idx + '">✕</span>';
+          div.addEventListener('click', function(e) {
+            if (e.target.classList.contains('layer-del')) return;
+            currentLayer = parseInt(this.dataset.layer);
+            renderLayers();
+          });
+          var del = div.querySelector('.layer-del');
+          del.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (layers.length > 1) {
+              layers.splice(idx, 1);
+              if (currentLayer >= layers.length) currentLayer = layers.length - 1;
+              renderLayers();
+              showNotification('Слой удалён');
+            } else {
+              showNotification('Нельзя удалить последний слой', 'warning');
+            }
+          });
+          container.appendChild(div);
+        });
+        // Кнопка добавить слой
+        var addBtn = document.createElement('div');
+        addBtn.className = 'layer';
+        addBtn.textContent = '+ Слой';
+        addBtn.style.cursor = 'pointer';
+        addBtn.addEventListener('click', function() {
+          layers.push({ id: Date.now(), visible: true });
+          currentLayer = layers.length - 1;
+          renderLayers();
+          showNotification('Слой добавлен');
+        });
+        container.appendChild(addBtn);
+      }
+      renderLayers();
 
       eraserBtn.addEventListener('click', function() {
         eraseMode = !eraseMode;
-        eraserBtn.style.background = eraseMode ? 'rgba(255,0,0,0.3)' : 'rgba(255,255,255,0.1)';
+        eraserBtn.style.background = eraseMode ? 'rgba(255,0,0,0.3)' : '';
         colorPicker.disabled = eraseMode;
         if (eraseMode) fillMode = false;
         fillBtn.style.background = '';
@@ -2688,15 +2838,48 @@
         if (fillMode) eraseMode = false;
         eraserBtn.style.background = '';
         colorPicker.disabled = false;
+        if (fillMode) {
+          ctx.fillStyle = colorPicker.value;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          saveHistory();
+          fillMode = false;
+          fillBtn.style.background = '';
+        }
+      });
+
+      textBtn.addEventListener('click', function() {
+        isTextMode = !isTextMode;
+        textBtn.style.background = isTextMode ? 'rgba(0,150,255,0.3)' : '';
+        if (isTextMode) {
+          showDialog({
+            title: 'Добавить текст',
+            message: 'Введите текст:',
+            input: true,
+            placeholder: 'Ваш текст',
+            defaultValue: 'Текст'
+          }).then(function(text) {
+            if (text && text.trim()) {
+              var size = sizeSlider.value * 2 || 20;
+              ctx.font = size + 'px sans-serif';
+              ctx.fillStyle = colorPicker.value;
+              ctx.textBaseline = 'top';
+              ctx.fillText(text.trim(), 50, 50);
+              saveHistory();
+            }
+            isTextMode = false;
+            textBtn.style.background = '';
+          });
+        }
+      });
+
+      undoBtn.addEventListener('click', undo);
+      redoBtn.addEventListener('click', redo);
+
+      sizeSlider.addEventListener('input', function() {
+        sizeLabel.textContent = sizeSlider.value;
       });
 
       function startDrawing(e) {
-        if (fillMode) {
-          // Заливка всей области
-          ctx.fillStyle = colorPicker.value;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          return;
-        }
         isDrawing = true;
         var rect = canvas.getBoundingClientRect();
         var scaleX = canvas.width / rect.width;
@@ -2706,7 +2889,10 @@
         lastX = x;
         lastY = y;
         if (shapeSelect.value === 'free') {
-          drawPoint(lastX, lastY);
+          ctx.beginPath();
+          ctx.arc(x, y, eraseMode ? sizeSlider.value * 1.5 : sizeSlider.value, 0, 2 * Math.PI);
+          ctx.fillStyle = eraseMode ? '#fff' : colorPicker.value;
+          ctx.fill();
         } else {
           startX = x;
           startY = y;
@@ -2714,7 +2900,7 @@
       }
 
       function draw(e) {
-        if (!isDrawing || fillMode) return;
+        if (!isDrawing) return;
         var rect = canvas.getBoundingClientRect();
         var scaleX = canvas.width / rect.width;
         var scaleY = canvas.height / rect.height;
@@ -2732,7 +2918,6 @@
           lastX = x;
           lastY = y;
         } else {
-          // Временное отображение фигуры (перерисовываем)
           var tempCanvas = document.createElement('canvas');
           tempCanvas.width = canvas.width;
           tempCanvas.height = canvas.height;
@@ -2742,12 +2927,14 @@
           tempCtx.lineWidth = sizeSlider.value;
           tempCtx.beginPath();
           if (shape === 'rect') {
-            var w = x - startX;
-            var h = y - startY;
-            tempCtx.strokeRect(startX, startY, w, h);
+            tempCtx.strokeRect(startX, startY, x - startX, y - startY);
           } else if (shape === 'circle') {
             var radius = Math.sqrt((x - startX) * (x - startX) + (y - startY) * (y - startY));
             tempCtx.arc(startX, startY, radius, 0, 2 * Math.PI);
+            tempCtx.stroke();
+          } else if (shape === 'line') {
+            tempCtx.moveTo(startX, startY);
+            tempCtx.lineTo(x, y);
             tempCtx.stroke();
           }
           ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -2756,7 +2943,7 @@
       }
 
       function stopDrawing(e) {
-        if (isDrawing && !fillMode && shapeSelect.value !== 'free') {
+        if (isDrawing && shapeSelect.value !== 'free') {
           var rect = canvas.getBoundingClientRect();
           var scaleX = canvas.width / rect.width;
           var scaleY = canvas.height / rect.height;
@@ -2767,25 +2954,22 @@
           ctx.lineWidth = sizeSlider.value;
           ctx.beginPath();
           if (shape === 'rect') {
-            var w = x - startX;
-            var h = y - startY;
-            ctx.strokeRect(startX, startY, w, h);
+            ctx.strokeRect(startX, startY, x - startX, y - startY);
           } else if (shape === 'circle') {
             var radius = Math.sqrt((x - startX) * (x - startX) + (y - startY) * (y - startY));
             ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
             ctx.stroke();
+          } else if (shape === 'line') {
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
           }
+          saveHistory();
           isDrawing = false;
-        } else {
+        } else if (isDrawing) {
+          saveHistory();
           isDrawing = false;
         }
-      }
-
-      function drawPoint(x, y) {
-        ctx.beginPath();
-        ctx.arc(x, y, eraseMode ? sizeSlider.value * 1.5 : sizeSlider.value, 0, 2 * Math.PI);
-        ctx.fillStyle = eraseMode ? '#fff' : colorPicker.value;
-        ctx.fill();
       }
 
       canvas.addEventListener('mousedown', startDrawing);
@@ -2797,6 +2981,7 @@
         if (confirm('Очистить холст?')) {
           ctx.fillStyle = '#fff';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
+          saveHistory();
         }
       });
 
@@ -2819,16 +3004,20 @@
         });
       });
 
-      // Обрезка (как было)
+      // Обрезка
       var cropMode = false;
       var cropStartX, cropStartY, cropEndX, cropEndY;
-      document.getElementById('pigmo-crop').addEventListener('click', function() {
+      var cropBtn = document.createElement('button');
+      cropBtn.textContent = 'Обрезать';
+      cropBtn.addEventListener('click', function() {
         cropMode = !cropMode;
-        this.style.background = cropMode ? 'rgba(255,0,0,0.3)' : '';
+        cropBtn.style.background = cropMode ? 'rgba(255,0,0,0.3)' : '';
         if (cropMode) {
           showNotification('Выделите область для обрезки', 'info');
         }
       });
+      document.querySelector('.pigmo-toolbar').appendChild(cropBtn);
+
       canvas.addEventListener('mousedown', function(e) {
         if (!cropMode) return;
         var rect = canvas.getBoundingClientRect();
@@ -2857,12 +3046,15 @@
         canvas.height = h;
         ctx.putImageData(imageData, 0, 0);
         cropMode = false;
-        document.getElementById('pigmo-crop').style.background = '';
+        cropBtn.style.background = '';
         showNotification('Обрезка выполнена');
+        saveHistory();
       });
 
       // Изменение размера
-      document.getElementById('pigmo-resize').addEventListener('click', function() {
+      var resizeBtn = document.createElement('button');
+      resizeBtn.textContent = 'Изменить размер';
+      resizeBtn.addEventListener('click', function() {
         showDialog({
           title: 'Изменить размер',
           message: 'Введите новую ширину (пиксели):',
@@ -2887,14 +3079,18 @@
                 canvas.height = parseInt(h);
                 ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
                 showNotification('Размер изменён');
+                saveHistory();
               }
             });
           }
         });
       });
+      document.querySelector('.pigmo-toolbar').appendChild(resizeBtn);
 
       // Поворот
-      document.getElementById('pigmo-rotate').addEventListener('click', function() {
+      var rotateBtn = document.createElement('button');
+      rotateBtn.textContent = 'Повернуть 90°';
+      rotateBtn.addEventListener('click', function() {
         var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         var tempCanvas = document.createElement('canvas');
         tempCanvas.width = canvas.width;
@@ -2908,7 +3104,9 @@
         ctx.drawImage(tempCanvas, -tempCanvas.width / 2, -tempCanvas.height / 2);
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         showNotification('Поворот на 90°');
+        saveHistory();
       });
+      document.querySelector('.pigmo-toolbar').appendChild(rotateBtn);
 
       var closeHandler = function() {
         canvas.removeEventListener('mousedown', startDrawing);
@@ -2921,7 +3119,7 @@
     }, 100);
   }
 
-  // ----- 19.10 Глобальный поиск -----
+  // ----- 20.10 Глобальный поиск -----
   function openSearch() {
     var content = '<div id="search-window"><input class="search-input" id="search-input" type="text" placeholder="Поиск приложений и файлов..." autofocus><div id="search-results"></div></div>';
     var winId = createWindow('Поиск', content, { width: 500, height: 400, iconType: 'search' });
@@ -2982,9 +3180,9 @@
     }, 100);
   }
 
-  // ----- 19.11 Браузер (с DuckDuckGo Lite, поиск в новой вкладке) -----
+  // ----- 20.11 Браузер (с Яндекс-поиском) -----
   function openBrowser() {
-    var content = '<div class="browser-toolbar"><button id="browser-back">◀</button><button id="browser-forward">▶</button><button id="browser-refresh">🔄</button><input id="browser-url" type="text" placeholder="Введите URL или поисковый запрос..." value=""><button id="browser-go">Перейти</button><button id="browser-search">🔍</button></div><iframe class="browser-frame" id="browser-frame" src="about:blank"></iframe>';
+    var content = '<div class="browser-toolbar"><button id="browser-back">◀</button><button id="browser-forward">▶</button><button id="browser-refresh">🔄</button><input id="browser-url" type="text" placeholder="Введите URL или поисковый запрос..." value=""><button id="browser-go">Перейти</button></div><iframe class="browser-frame" id="browser-frame" src="about:blank"></iframe>';
     var winId = createWindow('Браузер', content, { width: 800, height: 500, iconType: 'browser' });
     setTimeout(function() {
       var urlInput = document.getElementById('browser-url');
@@ -2993,7 +3191,6 @@
       var forwardBtn = document.getElementById('browser-forward');
       var refreshBtn = document.getElementById('browser-refresh');
       var goBtn = document.getElementById('browser-go');
-      var searchBtn = document.getElementById('browser-search');
       var history = [];
       var historyIndex = -1;
 
@@ -3004,9 +3201,9 @@
       function navigate(url) {
         if (!url) return;
         if (!isURL(url)) {
-          // Поисковый запрос – открываем в новой вкладке
-          window.open('https://duckduckgo.com/?q=' + encodeURIComponent(url), '_blank');
-          showNotification('Поиск открыт в новой вкладке', 'info');
+          // Поисковый запрос через Яндекс
+          window.open('https://yandex.ru/search/?text=' + encodeURIComponent(url), '_blank');
+          showNotification('Поиск открыт в новой вкладке Яндекс', 'info');
           return;
         } else {
           if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -3041,14 +3238,11 @@
       refreshBtn.addEventListener('click', function() {
         frame.src = frame.src;
       });
-      searchBtn.addEventListener('click', function() {
-        navigate(urlInput.value);
-      });
       navigate('example.com');
     }, 100);
   }
 
-  // ----- 19.12 Календарь (с событиями) -----
+  // ----- 20.12 Календарь -----
   function openCalendar() {
     var content = '<div class="calendar-nav"><button id="cal-prev">◀</button><span id="cal-month-year">Январь 2026</span><button id="cal-next">▶</button></div><div class="calendar-grid" id="calendar-grid"></div><div class="calendar-events-list" id="calendar-events"></div>';
     var winId = createWindow('Календарь', content, { width: 400, height: 450, iconType: 'calendar-app' });
@@ -3168,7 +3362,7 @@
     });
   }
 
-  // ----- 19.13 Будильник -----
+  // ----- 20.13 Будильник -----
   function openAlarm() {
     var content = '<div><div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;"><input type="number" id="alarm-hour" min="0" max="23" value="8" style="width:60px;padding:4px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);">:<input type="number" id="alarm-minute" min="0" max="59" value="0" style="width:60px;padding:4px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text-primary);"><button id="alarm-add" style="padding:4px 16px;background:var(--accent);color:#fff;border-radius:4px;">Добавить</button></div><div id="alarm-list"></div></div>';
     var winId = createWindow('Будильник', content, { width: 350, height: 350, iconType: 'alarm' });
@@ -3251,7 +3445,7 @@
     }, 10000);
   }
 
-  // ----- 19.14 Блокнот с вкладками -----
+  // ----- 20.14 Блокнот с вкладками -----
   function openNotepad() {
     var content = '<div class="notepad-tabs" id="notepad-tabs"><div class="tab active" data-tab="0">Новая заметка <span class="tab-close" data-tab="0">✕</span></div></div><textarea class="notepad-editor" id="notepad-editor" placeholder="Введите текст..."></textarea>';
     var winId = createWindow('Блокнот', content, { width: 600, height: 400, iconType: 'notepad' });
@@ -3345,7 +3539,7 @@
     if (winObj) winObj.onClose = closeHandler;
   }
 
-  // ----- 19.15 Менеджер паролей -----
+  // ----- 20.15 Менеджер паролей -----
   function openPasswords() {
     var content = '<div style="display:flex;gap:8px;margin-bottom:12px;"><button id="pass-add" style="background:var(--accent);color:#fff;padding:4px 16px;border-radius:4px;">Добавить</button></div><div id="pass-list"></div>';
     var winId = createWindow('Менеджер паролей', content, { width: 450, height: 400, iconType: 'password' });
@@ -3434,32 +3628,50 @@
     });
   }
 
-  // ----- 19.16 Презентация -----
+  // ----- 20.16 Презентация (улучшенная) -----
   function openPresentation() {
-    var content = '<div style="display:flex;flex-direction:column;height:100%;"><div style="display:flex;gap:6px;padding:6px;background:rgba(255,255,255,0.05);"><button id="slide-add" style="padding:4px 12px;background:var(--accent);color:#fff;border-radius:4px;">+ Слайд</button><button id="slide-del" style="padding:4px 12px;background:rgba(255,0,0,0.2);color:#ff5e5e;border-radius:4px;">Удалить</button><button id="slide-prev" style="padding:4px 12px;background:rgba(255,255,255,0.1);color:var(--text-primary);border-radius:4px;">◀</button><button id="slide-next" style="padding:4px 12px;background:rgba(255,255,255,0.1);color:var(--text-primary);border-radius:4px;">▶</button><span id="slide-counter" style="color:var(--text-primary);padding:4px 8px;">1 / 1</span></div><div id="slide-editor" style="flex:1;display:flex;flex-direction:column;padding:10px;"><textarea id="slide-text" style="flex:1;background:#111;color:#eee;border:none;padding:10px;font-size:16px;resize:none;outline:none;" placeholder="Введите текст слайда..."></textarea></div></div>';
-    var winId = createWindow('Презентация', content, { width: 600, height: 400, iconType: 'file' });
+    var content = '<div class="slide-container"><div class="slide-content" id="slide-content"><div id="slide-text-display" style="font-size:32px;font-weight:300;padding:20px;">Добро пожаловать!</div></div><div class="slide-controls"><button id="slide-prev">◀ Предыдущий</button><button id="slide-next">Следующий ▶</button><button id="slide-add">+ Добавить слайд</button><button id="slide-del">Удалить слайд</button><button id="slide-edit">✏️ Редактировать</button></div><div class="slide-counter" id="slide-counter">1 / 1</div></div>';
+    var winId = createWindow('Презентация', content, { width: 650, height: 450, iconType: 'file' });
     var slides = [{ text: 'Добро пожаловать!' }];
     var currentSlide = 0;
+    var editMode = false;
 
     function renderSlide() {
-      var textarea = document.getElementById('slide-text');
+      var display = document.getElementById('slide-text-display');
       var counter = document.getElementById('slide-counter');
-      if (!textarea) return;
+      if (!display) return;
       if (slides[currentSlide]) {
-        textarea.value = slides[currentSlide].text || '';
+        if (slides[currentSlide].text) {
+          display.textContent = slides[currentSlide].text;
+        } else if (slides[currentSlide].image) {
+          display.innerHTML = '<img src="' + slides[currentSlide].image + '" style="max-width:100%;max-height:300px;border-radius:4px;">';
+        }
         counter.textContent = (currentSlide + 1) + ' / ' + slides.length;
       }
     }
 
     setTimeout(function() {
-      var addBtn = document.getElementById('slide-add');
-      var delBtn = document.getElementById('slide-del');
       var prevBtn = document.getElementById('slide-prev');
       var nextBtn = document.getElementById('slide-next');
-      var textarea = document.getElementById('slide-text');
+      var addBtn = document.getElementById('slide-add');
+      var delBtn = document.getElementById('slide-del');
+      var editBtn = document.getElementById('slide-edit');
+      var display = document.getElementById('slide-text-display');
 
+      prevBtn.addEventListener('click', function() {
+        if (currentSlide > 0) {
+          currentSlide--;
+          renderSlide();
+        }
+      });
+      nextBtn.addEventListener('click', function() {
+        if (currentSlide < slides.length - 1) {
+          currentSlide++;
+          renderSlide();
+        }
+      });
       addBtn.addEventListener('click', function() {
-        slides.push({ text: '' });
+        slides.push({ text: 'Новый слайд' });
         currentSlide = slides.length - 1;
         renderSlide();
         showNotification('Слайд добавлен');
@@ -3474,30 +3686,178 @@
           showNotification('Нельзя удалить последний слайд', 'warning');
         }
       });
-      prevBtn.addEventListener('click', function() {
-        if (currentSlide > 0) {
-          slides[currentSlide].text = textarea.value;
-          currentSlide--;
-          renderSlide();
-        }
-      });
-      nextBtn.addEventListener('click', function() {
-        if (currentSlide < slides.length - 1) {
-          slides[currentSlide].text = textarea.value;
-          currentSlide++;
-          renderSlide();
-        }
-      });
-      textarea.addEventListener('input', function() {
-        if (slides[currentSlide]) {
-          slides[currentSlide].text = this.value;
+      editBtn.addEventListener('click', function() {
+        editMode = !editMode;
+        editBtn.style.background = editMode ? 'rgba(0,150,255,0.3)' : '';
+        if (editMode) {
+          showDialog({
+            title: 'Редактировать слайд',
+            message: 'Введите текст или URL изображения:',
+            input: true,
+            defaultValue: slides[currentSlide].text || ''
+          }).then(function(result) {
+            if (result !== null) {
+              if (result.startsWith('http') && (result.includes('.jpg') || result.includes('.png') || result.includes('.gif') || result.includes('.jpeg') || result.includes('.svg'))) {
+                slides[currentSlide] = { image: result };
+              } else {
+                slides[currentSlide] = { text: result || 'Пустой слайд' };
+              }
+              renderSlide();
+              editMode = false;
+              editBtn.style.background = '';
+              showNotification('Слайд обновлён');
+            } else {
+              editMode = false;
+              editBtn.style.background = '';
+            }
+          });
         }
       });
       renderSlide();
     }, 100);
   }
 
-  // ----- 19.17 Игры -----
+  // ----- 20.17 Музыкальный плеер -----
+  var playerAudio = null;
+  var playerTracks = [];
+
+  function openPlayer() {
+    var content = '<div class="player-info"><div class="track-name" id="player-track">Нет трека</div><div class="track-status" id="player-status">Загрузите MP3 файл</div></div><div class="player-progress"><div class="progress-fill" id="player-progress-fill"></div></div><div class="player-controls"><button id="player-play">▶</button><button id="player-pause">⏸</button><button id="player-stop">⏹</button><button id="player-prev">⏮</button><button id="player-next">⏭</button></div><div class="player-upload"><input type="file" id="player-file" accept="audio/mpeg"><button id="player-load">Загрузить MP3</button></div>';
+    var winId = createWindow('Музыкальный плеер', content, { width: 400, height: 300, iconType: 'player' });
+    setTimeout(function() {
+      var playBtn = document.getElementById('player-play');
+      var pauseBtn = document.getElementById('player-pause');
+      var stopBtn = document.getElementById('player-stop');
+      var prevBtn = document.getElementById('player-prev');
+      var nextBtn = document.getElementById('player-next');
+      var fileInput = document.getElementById('player-file');
+      var loadBtn = document.getElementById('player-load');
+      var trackName = document.getElementById('player-track');
+      var status = document.getElementById('player-status');
+      var progressFill = document.getElementById('player-progress-fill');
+      var currentTrackIndex = -1;
+
+      if (!playerAudio) {
+        playerAudio = new Audio();
+      }
+
+      function loadTrack(index) {
+        if (index < 0 || index >= playerTracks.length) return;
+        currentTrackIndex = index;
+        var track = playerTracks[index];
+        playerAudio.src = track.data;
+        playerAudio.load();
+        trackName.textContent = track.name;
+        status.textContent = 'Загружено';
+        playBtn.textContent = '▶';
+        showNotification('Загружено: ' + track.name);
+      }
+
+      function updateProgress() {
+        if (playerAudio && playerAudio.duration) {
+          var pct = (playerAudio.currentTime / playerAudio.duration) * 100;
+          progressFill.style.width = pct + '%';
+        }
+      }
+
+      playerAudio.addEventListener('timeupdate', updateProgress);
+      playerAudio.addEventListener('ended', function() {
+        if (currentTrackIndex < playerTracks.length - 1) {
+          loadTrack(currentTrackIndex + 1);
+          playerAudio.play();
+          playBtn.textContent = '⏸';
+        } else {
+          status.textContent = 'Воспроизведение завершено';
+          playBtn.textContent = '▶';
+          progressFill.style.width = '0%';
+        }
+      });
+
+      playBtn.addEventListener('click', function() {
+        if (playerTracks.length === 0) {
+          showNotification('Сначала загрузите MP3 файл', 'warning');
+          return;
+        }
+        if (playerAudio.paused) {
+          playerAudio.play();
+          playBtn.textContent = '⏸';
+          status.textContent = 'Воспроизведение';
+        } else {
+          playerAudio.pause();
+          playBtn.textContent = '▶';
+          status.textContent = 'Пауза';
+        }
+      });
+
+      pauseBtn.addEventListener('click', function() {
+        if (playerAudio) {
+          playerAudio.pause();
+          playBtn.textContent = '▶';
+          status.textContent = 'Пауза';
+        }
+      });
+
+      stopBtn.addEventListener('click', function() {
+        if (playerAudio) {
+          playerAudio.pause();
+          playerAudio.currentTime = 0;
+          playBtn.textContent = '▶';
+          status.textContent = 'Остановлено';
+          progressFill.style.width = '0%';
+        }
+      });
+
+      prevBtn.addEventListener('click', function() {
+        if (currentTrackIndex > 0) {
+          loadTrack(currentTrackIndex - 1);
+          playerAudio.play();
+          playBtn.textContent = '⏸';
+        } else {
+          showNotification('Это первый трек', 'warning');
+        }
+      });
+
+      nextBtn.addEventListener('click', function() {
+        if (currentTrackIndex < playerTracks.length - 1) {
+          loadTrack(currentTrackIndex + 1);
+          playerAudio.play();
+          playBtn.textContent = '⏸';
+        } else {
+          showNotification('Это последний трек', 'warning');
+        }
+      });
+
+      loadBtn.addEventListener('click', function() {
+        if (!fileInput.files || fileInput.files.length === 0) {
+          showNotification('Выберите MP3 файл', 'warning');
+          return;
+        }
+        var file = fileInput.files[0];
+        if (!file.type.startsWith('audio/')) {
+          showNotification('Требуется аудиофайл', 'error');
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var dataUrl = e.target.result;
+          playerTracks.push({ name: file.name, data: dataUrl });
+          if (currentTrackIndex === -1) {
+            loadTrack(0);
+          }
+          showNotification('Файл "' + file.name + '" загружен');
+          fileInput.value = '';
+          status.textContent = 'Треков: ' + playerTracks.length;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      status.textContent = 'Загрузите MP3 файл';
+    }, 100);
+  }
+
+  // ----- 20.18 Игры (Змейка, Тетрис, Сапёр) -----
+  // Они уже были в предыдущих версиях. Я их сохраняю.
+
   function openSnakeGame() {
     var content = '<div class="game-score">Счёт: <span id="snake-score">0</span></div><div class="game-level">Уровень: <span id="snake-level">1</span> (скорость <span id="snake-speed">150</span>ms)</div><div class="game-canvas-wrapper"><canvas id="snake-canvas" width="400" height="400"></canvas></div>';
     var winId = createWindow('Змейка', content, { width: 440, height: 500, iconType: 'snake' });
@@ -3592,7 +3952,6 @@
             input: false
           }).then(function(result) {
             if (result) {
-              // Перезапуск
               snake = [{ x: 5, y: 5 }];
               direction = 'RIGHT';
               nextDirection = 'RIGHT';
@@ -4029,7 +4388,7 @@
   }
 
   // ============================================================
-  //  20. МЕНЮ ПУСК
+  //  21. МЕНЮ ПУСК
   // ============================================================
   document.getElementById('start-btn').addEventListener('click', function() {
     var apps = getAllApps();
@@ -4040,10 +4399,9 @@
       if (!container) return;
       apps.forEach(function(app) {
         var btn = document.createElement('button');
-        btn.style.cssText = 'background:rgba(255,255,255,0.05);border:none;color:white;padding:8px 12px;border-radius:4px;text-align:left;font-size:14px;transition:background .2s;cursor:pointer;display:flex;align-items:center;gap:10px;';
+        btn.style.cssText = 'background:rgba(255,255,255,0.05);border:none;color:var(--text-primary);padding:8px 12px;border-radius:4px;text-align:left;font-size:14px;transition:background .2s;cursor:pointer;display:flex;align-items:center;gap:10px;';
         btn.innerHTML = '<span style="width:24px;height:24px;">' + iconHTML(app.icon) + '</span> ' + app.label;
         if (document.body.classList.contains('light-theme') || document.body.classList.contains('theme-ocean') || document.body.classList.contains('theme-forest') || document.body.classList.contains('theme-sunset') || document.body.classList.contains('theme-mono')) {
-          btn.style.color = '#222';
           btn.style.background = 'rgba(0,0,0,0.05)';
         }
         btn.addEventListener('mouseenter', function() {
@@ -4066,7 +4424,7 @@
   });
 
   // ============================================================
-  //  21. ВОССТАНОВЛЕНИЕ НАСТРОЕК И ЗАПУСК
+  //  22. ВОССТАНОВЛЕНИЕ НАСТРОЕК И ЗАПУСК
   // ============================================================
   function restoreSettings() {
     var savedTheme = localStorage.getItem('nextelos-theme') || 'dark';
@@ -4097,9 +4455,9 @@
     .then(function() {
       restoreSettings();
       renderDesktopIcons();
-      showNotification('NextelOS v0.0.5 загружена!');
+      showNotification('NextelOS v0.0.6 загружена!');
       setTimeout(function() {
-        createWindow('Привет', '👋 Добро пожаловать в <b>NextelOS v0.0.5</b>!<br>Все функции работают: терминал, файлы, редактор с Markdown, калькулятор, настройки с слайд-шоу, процессы, корзина, магазин, Pigmo Pro, поиск, браузер, календарь, будильник, блокнот, пароли, презентации, игры, системный трей, график CPU, анимации, звуки, закрепление окон, горячие клавиши, DND.', { iconType: 'start' });
+        createWindow('Привет', '👋 Добро пожаловать в <b>NextelOS v0.0.6</b>!<br>Полноценная погода без ключа, улучшенный Pigmo Pro, магазин, плеер, презентации и многое другое.', { iconType: 'start' });
       }, 500);
     })
     .catch(function(err) {
@@ -4110,5 +4468,5 @@
   window.closeWindow = closeWindow;
   window.renderDesktopIcons = renderDesktopIcons;
   window.showNotification = showNotification;
-  console.log('NextelOS v0.0.5 загружена!');
+  console.log('NextelOS v0.0.6 загружена!');
 })();
