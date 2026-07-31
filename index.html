@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NextelOS v0.0.8</title>
+    <title>NextelOS v0.1.0</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>🖥️</text></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -74,6 +74,23 @@
     <!-- ВЫДЕЛЕНИЕ -->
     <div id="selection-rect"></div>
 
-    <script src="app.js"></script>
+    <!-- МЕНЮ ПУСК (ВЫПАДАЮЩЕЕ) -->
+    <div id="start-menu" style="display:none;"></div>
+
+    <!-- БЛОКИРОВКА ЭКРАНА -->
+    <div id="lock-screen" style="display:none;">
+        <div id="lock-screen-box">
+            <h2>NextelOS заблокирована</h2>
+            <input type="password" id="lock-password" placeholder="Пароль">
+            <button id="lock-unlock">Разблокировать</button>
+        </div>
+    </div>
+
+    <script src="js/kernel.js"></script>
+    <script src="js/filesystem.js"></script>
+    <script src="js/desktop.js"></script>
+    <script src="js/apps.js"></script>
+    <script src="js/games.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
