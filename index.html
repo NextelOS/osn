@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NextelOS v0.0.7</title>
+    <title>NextelOS v0.0.8</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>🖥️</text></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- РАБОЧИЙ СТОЛ -->
     <div id="desktop"></div>
+
+    <!-- ВИДЖЕТЫ -->
     <div id="widgets">
         <div class="widget-clock" id="widget-clock">
             <div class="time" id="widget-time">00:00:00</div>
@@ -25,21 +28,37 @@
             <canvas id="cpu-chart" width="200" height="40"></canvas>
         </div>
     </div>
+
+    <!-- ПАНЕЛЬ ЗАДАЧ -->
     <div id="taskbar">
-        <button id="start-btn"><span class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4l16 8L4 20V4z"/></svg></span>Пуск</button>
-        <button id="collapse-all-btn"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><path d="M5 12h14M12 5v14"/></svg></span></button>
+        <button id="start-btn">
+            <span class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4l16 8L4 20V4z"/></svg></span>
+            Пуск
+        </button>
+        <button id="collapse-all-btn">
+            <span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><path d="M5 12h14M12 5v14"/></svg></span>
+        </button>
         <div id="taskbar-windows"></div>
+        <input id="taskbar-search" type="text" placeholder="Поиск...">
         <button id="tray-btn" title="Системный трей">🔊</button>
         <span id="taskbar-clock">00:00:00</span>
     </div>
+
+    <!-- СИСТЕМНЫЙ ТРЕЙ -->
     <div id="system-tray">
         <div class="tray-item"><span>🔊</span><input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.5"><span id="volume-label">50%</span></div>
         <div class="tray-item"><span>📶</span><span id="network-status">Онлайн</span></div>
         <div class="tray-item"><span>🔋</span><span id="battery-status">100%</span></div>
         <div class="tray-item"><span>🔕</span><label><input type="checkbox" id="do-not-disturb"> Не беспокоить</label></div>
     </div>
+
+    <!-- УВЕДОМЛЕНИЯ -->
     <div id="notifications"></div>
+
+    <!-- КОНТЕКСТНОЕ МЕНЮ -->
     <div id="context-menu"></div>
+
+    <!-- ДИАЛОГ -->
     <div id="dialog-overlay">
         <div id="dialog-box">
             <h3 id="dialog-title">Подтверждение</h3>
@@ -51,7 +70,10 @@
             </div>
         </div>
     </div>
+
+    <!-- ВЫДЕЛЕНИЕ -->
     <div id="selection-rect"></div>
+
     <script src="app.js"></script>
 </body>
 </html>
